@@ -236,8 +236,34 @@ function buildLegend(data) {
 
   const row = document.getElementById("legendRow");
   row.innerHTML = order.map(tag =>
-    `<span class="legend-item"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${nameByTag.get(tag) || tag}</span>`
+    `<span class="legend-item" data-tag="${tag}"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${nameByTag.get(tag) || tag}</span>`
   ).join("");
+
+  row.querySelectorAll(".legend-item").forEach(el => {
+    const tag = el.dataset.tag;
+    el.addEventListener("mouseenter", () => highlightCommunity(tag));
+    el.addEventListener("mouseleave", () => restoreView());
+  });
+}
+
+function highlightCommunity(tag) {
+  nodeLayer.selectAll("circle")
+    .classed("hl", n => n.ctag === tag)
+    .classed("dim", n => n.ctag !== tag);
+  edgeLayer.selectAll("line")
+    .classed("hl", e => nodeById.get(e.s).ctag === tag && nodeById.get(e.t).ctag === tag)
+    .classed("dim", e => nodeById.get(e.s).ctag !== tag && nodeById.get(e.t).ctag !== tag);
+}
+
+function restoreView() {
+  // back to whatever was showing before the legend hover — a selected
+  // node's highlight, or the neutral (nothing dim/hl) state
+  if (selectedId) {
+    selectNode(selectedId, false);
+  } else {
+    nodeLayer.selectAll("circle").classed("dim", false).classed("hl", false);
+    edgeLayer.selectAll("line").classed("dim", false).classed("hl", false);
+  }
 }
 
 // ---------- search ----------

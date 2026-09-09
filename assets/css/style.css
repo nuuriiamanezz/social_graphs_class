@@ -377,5 +377,6 @@ table.stat-table td.num{ color:var(--cyan); font-variant-numeric: tabular-nums; 
 .chip-more:hover{ border-color:var(--border); color:var(--text-dim); }
 
 .legend-row{ display:flex; flex-wrap:wrap; gap:14px; margin:18px 2px 40px; }
-.legend-item{ display:flex; align-items:center; gap:6px; font-size:.78rem; color:var(--text-dim); }
+.legend-item{ display:flex; align-items:center; gap:6px; font-size:.78rem; color:var(--text-dim); cursor:default; transition:color .15s; }
+.legend-item:hover{ color:var(--text); }
 .legend-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
