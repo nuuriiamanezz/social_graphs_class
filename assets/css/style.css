@@ -256,6 +256,35 @@ article figure img{
 }
 article figcaption{ color:var(--text-dim); font-size:.85rem; margin-top:10px; }
 
+/* ---------- interactive degree-distribution chart (week 1) ---------- */
+.degree-chart-card{
+  position:relative;
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px 18px 8px;
+  box-shadow:var(--shadow-pink);
+}
+.degree-chart-title{
+  text-align:center; color:var(--text-dim); font-size:.78rem;
+  text-transform:uppercase; letter-spacing:1px; margin:0 0 16px;
+}
+.degree-chart-panels{ display:flex; flex-wrap:wrap; gap:20px; justify-content:center; }
+.degree-panel{ flex:1 1 280px; max-width:460px; }
+.degree-panel h5{
+  font-family:'Poppins', sans-serif; font-weight:700; font-size:.85rem;
+  text-align:center; margin:0 0 4px; letter-spacing:.3px;
+}
+.degree-svg{ width:100%; height:auto; display:block; }
+.degree-chart-hint{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:6px 0 4px; }
+.degree-axis path, .degree-axis line{ stroke:var(--border); }
+.degree-axis text{ fill:var(--text-dim); font-size:9px; font-family:'Poppins', sans-serif; }
+.degree-axislabel{ fill:var(--text-dim); font-size:10px; font-family:'Poppins', sans-serif; }
+.degree-line{ fill:none; stroke-width:2px; opacity:.85; }
+.degree-marker{ stroke:var(--bg-panel); stroke-width:2px; transition:r .15s; }
+.degree-hit{ fill:transparent; cursor:pointer; }
+.degree-pt:hover .degree-marker{ r:6.5; filter:drop-shadow(0 0 4px currentColor); }
+
 table.stat-table{
   width:100%; border-collapse:collapse; margin:18px 0 8px; font-size:.92rem;
 }

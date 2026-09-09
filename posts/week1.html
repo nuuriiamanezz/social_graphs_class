@@ -7,6 +7,7 @@
 <meta name="description" content="Week 1 go-nuts post: degree distributions, in- vs out-degree, and the connected components of the Marvel Wikipedia hyperlink network.">
 <link rel="stylesheet" href="../assets/css/style.css">
 <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 
 <meta property="og:type" content="article">
 <meta property="og:title" content="Week 1 — Islands in the web | WebCrawl">
@@ -102,7 +103,24 @@
     </p>
 
     <figure>
-      <img src="../assets/img/fig_degree_distributions.png" alt="Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network, with raw points and a log-binned line overlay for each.">
+      <div class="degree-chart-card" id="degreeChart">
+        <p class="degree-chart-title">Who links to whom in the Marvel superhero web</p>
+        <div class="degree-chart-panels">
+          <div class="degree-panel">
+            <h5 style="color:var(--hotpink)">in-degree (cited by)</h5>
+            <svg class="degree-svg" data-key="in" viewBox="0 0 460 380" preserveAspectRatio="xMidYMid meet" role="img" aria-label="In-degree distribution, log-log, interactive"></svg>
+          </div>
+          <div class="degree-panel">
+            <h5 style="color:var(--cyan)">out-degree (cites)</h5>
+            <svg class="degree-svg" data-key="out" viewBox="0 0 460 380" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Out-degree distribution, log-log, interactive"></svg>
+          </div>
+        </div>
+        <p class="degree-chart-hint">Hover (or tap) a dot to see which characters sit at that degree.</p>
+        <div id="degreeTooltip" class="graph-tooltip" hidden></div>
+      </div>
+      <noscript>
+        <img src="../assets/img/fig_degree_distributions.png" alt="Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network, with raw points and a log-binned line overlay for each.">
+      </noscript>
       <figcaption>
         In-degree (left, pink) vs. out-degree (right, cyan) on log&ndash;log axes, degree
         k+1 so isolates stay visible. Both look roughly linear once binned — but the
@@ -259,6 +277,145 @@
   <a class="back-link" href="../index.html">&larr; Back to all posts</a>
 
 </main>
+
+<script>
+(function () {
+  const svgEls = document.querySelectorAll(".degree-svg");
+  if (!svgEls.length) return;
+
+  const card = document.getElementById("degreeChart");
+  const tooltip = document.getElementById("degreeTooltip");
+  const COLORS = { in: "#ff2e9c", out: "#00e5ff" };
+
+  const VBW = 460, VBH = 380;
+  const MARGIN = { top: 10, right: 16, bottom: 42, left: 44 };
+  const PW = VBW - MARGIN.left - MARGIN.right;
+  const PH = VBH - MARGIN.top - MARGIN.bottom;
+
+  fetch("../assets/data/explore_data.json")
+    .then(r => r.json())
+    .then(data => {
+      svgEls.forEach(svgEl => drawPanel(svgEl, data.nodes, svgEl.dataset.key));
+    })
+    .catch(err => {
+      card.innerHTML =
+        "<p style='color:var(--text-dim);font-size:.85rem;margin:0 0 12px;'>" +
+        "Couldn't load the interactive chart &mdash; showing the static version instead.</p>" +
+        "<img src='../assets/img/fig_degree_distributions.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);' " +
+        "alt='Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network.'>";
+      console.error(err);
+    });
+
+  // Groups characters by exact degree value (raw distribution), then folds
+  // that into geometrically-spaced bins (count / bin width) so the trend
+  // line reads as a density the same way the static figure's log-binning did.
+  function logBins(points, xMin, xMax, nBins) {
+    const edges = d3.range(nBins + 1).map(i => xMin * Math.pow(xMax / xMin, i / nBins));
+    const bins = [];
+    for (let i = 0; i < nBins; i++) {
+      const lo = edges[i], hi = edges[i + 1];
+      const inBin = points.filter(p => p.x >= lo && (p.x < hi || (i === nBins - 1 && p.x <= hi)));
+      if (!inBin.length) continue;
+      const totalY = d3.sum(inBin, p => p.y);
+      bins.push({ x: Math.sqrt(lo * hi), y: totalY / (hi - lo) });
+    }
+    return bins;
+  }
+
+  function drawPanel(svgEl, nodes, key) {
+    const color = COLORS[key];
+    const byDeg = d3.rollup(nodes, v => v, n => n[key]);
+    const raw = Array.from(byDeg, ([deg, members]) => ({
+      x: deg + 1,
+      y: members.length,
+      deg,
+      members: members.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    })).sort((a, b) => a.x - b.x);
+
+    const xMax = d3.max(raw, d => d.x);
+    const binned = logBins(raw, 1, xMax, 14);
+
+    const svg = d3.select(svgEl);
+    svg.selectAll("*").remove();
+    const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+    const x = d3.scaleLog().domain([1, xMax]).range([0, PW]);
+    // the narrow first log-bin can produce a density spike well above the
+    // raw counts, so the y-domain has to cover whichever of raw/binned is
+    // more extreme in each direction, or the line clips off the chart.
+    const yLow = Math.min(d3.min(binned, d => d.y), 1) * 0.75;
+    const yHigh = Math.max(d3.max(raw, d => d.y), d3.max(binned, d => d.y)) * 1.15;
+    const y = d3.scaleLog().domain([yLow, yHigh]).range([PH, 0]);
+
+    g.append("g")
+      .attr("class", "degree-axis")
+      .attr("transform", `translate(0,${PH})`)
+      .call(d3.axisBottom(x).ticks(5, "~s").tickSizeOuter(0));
+    g.append("g")
+      .attr("class", "degree-axis")
+      .call(d3.axisLeft(y).ticks(5, "~s").tickSizeOuter(0));
+
+    g.append("text")
+      .attr("class", "degree-axislabel")
+      .attr("x", PW / 2).attr("y", PH + 34).attr("text-anchor", "middle")
+      .text("degree k + 1");
+    g.append("text")
+      .attr("class", "degree-axislabel")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -PH / 2).attr("y", -32).attr("text-anchor", "middle")
+      .text("# characters");
+
+    const line = d3.line().x(d => x(d.x)).y(d => y(d.y)).curve(d3.curveMonotoneX);
+    g.append("path").datum(binned).attr("class", "degree-line").attr("stroke", color).attr("d", line);
+
+    const ptG = g.selectAll(".degree-pt")
+      .data(raw)
+      .join("g")
+      .attr("class", "degree-pt")
+      .attr("transform", d => `translate(${x(d.x)},${y(d.y)})`);
+
+    ptG.append("circle").attr("class", "degree-marker").attr("r", 4).attr("fill", color);
+    ptG.append("circle")
+      .attr("class", "degree-hit")
+      .attr("r", 12)
+      .on("mouseenter", (ev, d) => showTooltip(ev, d, key))
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", () => { tooltip.hidden = true; })
+      .on("click", (ev, d) => showTooltip(ev, d, key));
+  }
+
+  function showTooltip(ev, d, key) {
+    tooltip.hidden = false;
+    tooltip.innerHTML = "";
+
+    const strong = document.createElement("strong");
+    strong.textContent = `${d.y} character${d.y === 1 ? "" : "s"}`;
+    tooltip.appendChild(strong);
+    tooltip.appendChild(document.createElement("br"));
+
+    const sub = document.createElement("span");
+    sub.style.color = "var(--text-dim)";
+    sub.textContent = `${key === "in" ? "in-degree" : "out-degree"} ${d.deg}`;
+    tooltip.appendChild(sub);
+    tooltip.appendChild(document.createElement("br"));
+
+    const names = d.members.map(m => m.name.replace(" (character)", ""));
+    const shown = names.slice(0, 6);
+    const more = names.length - shown.length;
+    const list = document.createElement("span");
+    list.textContent = shown.join(", ") + (more > 0 ? `, +${more} more` : "");
+    tooltip.appendChild(list);
+
+    moveTooltip(ev);
+  }
+
+  function moveTooltip(ev) {
+    const rect = card.getBoundingClientRect();
+    tooltip.style.left = (ev.clientX - rect.left + 14) + "px";
+    tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
+  }
+})();
+</script>
 
 <footer>
   <div class="wrap">
