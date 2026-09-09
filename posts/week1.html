@@ -31,6 +31,7 @@
     <span class="week-badge">Week 1 — Bootstrap edition</span>
     <h1>Islands in the web: degrees, hubs, and a 9-character team nobody links to</h1>
     <p class="post-meta">Marvel Comics superheroes hyperlink network · week-1 frozen snapshot (2026-08-26) · 303 nodes, 1,784 directed edges</p>
+    <p class="post-meta" style="color:var(--cyan);">Updated Sept 9 — added communities, centrality, small-world &amp; power-law tests (<a href="#more">jump down</a>)</p>
   </div>
 
   <article>
@@ -137,6 +138,111 @@
       either. It's a reminder that "the giant component" and "the network" are not the same
       claim, and that summary statistics like ⟨k⟩ quietly assume they are.
     </p>
+
+    <h2 id="more">Playing more: four extra tests</h2>
+    <p>
+      We weren't done poking. Once the basics were in place we asked four more specific
+      questions of the same 303-character network — no new data, just more tools pointed at
+      what we already had.
+    </p>
+
+    <h3 style="color:var(--yellow); margin-top:28px;">Do superhero teams fall out of hyperlinks alone?</h3>
+    <p>
+      We ran Louvain community detection on the giant component's undirected graph, with no
+      information about who's actually on which team &mdash; just link structure. It found
+      <strong>8 communities</strong> (modularity 0.39, comfortably above the ~0.3 threshold
+      that usually marks real structure) and, unprompted, recovered something close to
+      familiar Marvel groupings: a Spider-Man/Venom/Black Cat cluster, a Wolverine-led
+      X-Men-flavored cluster, a Hulk/Hercules/Adam Warlock cosmic-strength cluster, a
+      Doctor Strange/Deadpool/Blade mystic-and-antihero cluster, and four smaller ones
+      anchored by Black Panther, She-Hulk, Human Torch (the android original), and Scarlet
+      Witch respectively.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_communities.png" alt="The giant component network redrawn with nodes colored by Louvain community instead of degree, forming eight visually distinct clusters, each labeled with its highest-degree member: Spider-Man, Wolverine, Hulk, Doctor Strange, Black Panther, She-Hulk, Human Torch, and Scarlet Witch.">
+      <figcaption>
+        Same layout as before, recolored by community instead of degree. Eight clusters,
+        each labeled by its own biggest hub — link structure alone gets you most of the way
+        to "which characters run together."
+      </figcaption>
+    </figure>
+
+    <h3 style="color:var(--yellow); margin-top:28px;">Who's actually central?</h3>
+    <p>
+      Raw in-degree says who's linked to most, but it can't tell you whether those links come
+      from other important pages or from obscurity. We computed PageRank (which weighs a link
+      by the importance of whoever's linking) and betweenness centrality (how often a
+      character sits on the shortest path between two others) alongside degree. Spider-Man,
+      Hulk, Wolverine and Doctor Strange top all three rankings — no surprise there. The
+      interesting cases are the characters that jump when you change the ruler: Black Cat and
+      Mayday Parker crack PageRank's top 10 without coming close on raw in-degree, because
+      they're linked from Spider-Man's own high-value neighborhood. And <strong>Rockman</strong>,
+      with a raw degree of just 2, ranks 59th out of 277 characters on betweenness &mdash; his
+      two links happen to be the only bridge between two otherwise-separate neighborhoods, and
+      the network would fracture a little without them.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_centrality.png" alt="Log-log scatter plot of degree versus betweenness centrality for every character in the giant component, colored by community, with five low-degree, high-betweenness bridge characters circled and labeled: Rockman, Stingray, Red Wolf, Brian Braddock, and Solo.">
+      <figcaption>
+        Degree vs. betweenness for every character in the giant component. Most points sit on
+        the expected diagonal &mdash; more links, more betweenness &mdash; but the circled
+        outliers punch above their degree: a handful of thin links holding two neighborhoods
+        together.
+      </figcaption>
+    </figure>
+
+    <h3 style="color:var(--yellow); margin-top:28px;">Is this actually a small world?</h3>
+    <p>
+      "Small world" isn't just a vibe &mdash; it's a specific claim: much more clustered than
+      a comparable random graph, but with paths just as short. We compared the giant component
+      against 12 degree-preserving random rewirings of itself (same 277 nodes, same degree for
+      every node, edges shuffled). The real network's clustering coefficient is
+      <strong>0.320</strong>, more than double the randomized average of <strong>0.155</strong>
+      &mdash; characters' co-linked neighbors really do tend to link to each other. Average
+      shortest path length, meanwhile, barely moves: <strong>2.67</strong> in the real network
+      versus <strong>2.60</strong> randomized, and the diameter (longest shortest path) is just
+      <strong>6</strong>. High clustering, short paths &mdash; that's the small-world signature,
+      not just an eyeball impression.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_smallworld.png" alt="Two bar charts comparing the real network to randomized versions with the same degree sequence: clustering coefficient is 0.320 for the real network versus 0.155 randomized, while average shortest path length is nearly identical at 2.674 versus 2.604.">
+      <figcaption>
+        Real network vs. the average of 12 degree-preserving rewirings. Clustering roughly
+        doubles; path length barely changes.
+      </figcaption>
+    </figure>
+
+    <h3 style="color:var(--yellow); margin-top:28px;">So &mdash; is it actually a power law?</h3>
+    <p>
+      Last week's log&ndash;log plot looked roughly straight, but "looks straight on log-log
+      axes" is a low bar. We fit the in-degree tail properly using maximum-likelihood
+      estimation (the <code>powerlaw</code> package, following Clauset, Shalizi &amp; Newman):
+      it settles on α ≈ 2.22 with the power-law regime starting at x<sub>min</sub> = 5,
+      covering 112 of the 245 characters with at least one in-link. Then we asked the honest
+      follow-up question: is a power law actually a <em>better</em> fit than the alternatives,
+      or just a plausible-looking one? A log-likelihood ratio test says no, not decisively
+      &mdash; power law beats exponential with R = 4.95 but p = 0.53, and loses narrowly to a
+      lognormal (R = &minus;3.57, p = 0.12), neither result clearing the bar for statistical
+      significance.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_powerlaw.png" alt="Log-log complementary cumulative distribution function plot of in-degree, with the raw data as pink dots and both a fitted power-law line and a fitted exponential line overlaid for comparison.">
+      <figcaption>
+        In-degree CCDF with both fits overlaid. They agree almost everywhere except the very
+        tail, which is exactly where a network of 303 nodes runs out of data to tell them apart.
+      </figcaption>
+    </figure>
+
+    <div class="callout">
+      Our take: with only 303 nodes and a single character way out at k = 106, this dataset
+      doesn't have enough range to declare a power law with confidence &mdash; and that's a
+      real, useful finding, not a null result. It's a reminder to distrust a clean-looking
+      log-log line on a small network until a proper test backs it up.
+    </div>
 
   </article>
 
