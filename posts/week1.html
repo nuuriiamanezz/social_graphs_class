@@ -647,11 +647,46 @@
       .attr("class", "centrality-bridge-ring")
       .attr("r", 9);
 
-    ptG.filter(d => BRIDGES.includes(d.id))
+    // Four of the five bridges (all but Rockman) sit close enough together
+    // in this data that direct point-adjacent labels overlap each other —
+    // so those four get stacked into a leader-lined list instead, sorted
+    // top-to-bottom the same way they're plotted so the leader lines fan
+    // out cleanly rather than crossing. Rockman sits alone with room to
+    // spare, so it keeps a plain label right beside its point.
+    const cleanName = name => name.replace(/\s*\([^)]*\)\s*$/, "");
+    const STACKED_BRIDGES = new Set([
+      "Stingray_(Marvel_Comics)", "Red_Wolf_(comics)", "Brian_Braddock", "Solo_(Marvel_Comics)",
+    ]);
+
+    ptG.filter(d => BRIDGES.includes(d.id) && !STACKED_BRIDGES.has(d.id))
       .append("text")
       .attr("class", "centrality-bridge-label")
       .attr("x", 12).attr("y", -10)
-      .text(d => d.name.replace(" (character)", ""));
+      .text(d => cleanName(d.name));
+
+    const stacked = points
+      .filter(d => STACKED_BRIDGES.has(d.id))
+      .map(d => ({ d, px: x(d.deg + 1), py: y(Math.max(d.bet, FLOOR)) }))
+      .sort((a, b) => a.py - b.py); // top-to-bottom on the chart
+
+    if (stacked.length) {
+      const rowH = 20;
+      const stackX = d3.max(stacked, p => p.px) + 34;
+      const firstRowY = stacked[0].py - ((stacked.length - 1) * rowH) / 2;
+      const stackG = g.append("g").attr("class", "centrality-bridge-stack");
+      stacked.forEach((p, i) => {
+        const rowY = firstRowY + i * rowH;
+        stackG.append("line")
+          .attr("class", "centrality-bridge-leader")
+          .attr("x1", p.px).attr("y1", p.py)
+          .attr("x2", stackX - 6).attr("y2", rowY);
+        stackG.append("text")
+          .attr("class", "centrality-bridge-label")
+          .attr("x", stackX).attr("y", rowY + 4)
+          .attr("text-anchor", "start")
+          .text(cleanName(p.d.name));
+      });
+    }
 
     ptG.append("circle")
       .attr("class", "centrality-hit")

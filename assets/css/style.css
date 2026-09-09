@@ -282,6 +282,7 @@ article figcaption{ color:var(--text-dim); font-size:.85rem; margin-top:10px; }
   paint-order:stroke; stroke:var(--bg-panel); stroke-width:3px; stroke-linejoin:round;
   pointer-events:none;
 }
+.centrality-bridge-leader{ stroke:var(--yellow); stroke-width:1px; opacity:.55; pointer-events:none; }
 .centrality-hit{ fill:transparent; cursor:pointer; }
 .centrality-pt:hover .centrality-marker{ r:6; filter:drop-shadow(0 0 4px currentColor); }
 
