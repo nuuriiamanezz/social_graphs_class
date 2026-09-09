@@ -269,6 +269,27 @@ article figcaption{ color:var(--text-dim); font-size:.85rem; margin-top:10px; }
   pointer-events:none;
 }
 
+/* ---------- interactive small-world bar charts (week 1) ---------- */
+.sw-bar{ cursor:pointer; transition:opacity .15s; }
+.sw-bar:hover{ opacity:.85; }
+.sw-bar-random{ fill:#6b5a74; }
+.sw-bar-label{
+  fill:var(--text); font-family:'Poppins', sans-serif; font-weight:700; font-size:13px;
+  text-anchor:middle;
+}
+.sw-dot{
+  fill:var(--yellow); stroke:var(--bg-panel); stroke-width:1.5px; cursor:pointer;
+  transition:r .15s;
+}
+.sw-dot:hover{ r:5.5; filter:drop-shadow(0 0 4px rgba(255,225,77,.8)); }
+
+/* ---------- interactive power-law CCDF chart (week 1) ---------- */
+.powerlaw-fit-line{ fill:none; stroke-width:2px; stroke-dasharray:6 4; opacity:.9; }
+.legend-dash{
+  width:16px; height:0; border-top:2px dashed var(--border);
+  display:inline-block; margin-right:2px;
+}
+
 /* ---------- interactive centrality scatter (week 1) ---------- */
 .centrality-svg{ width:100%; height:auto; display:block; }
 .centrality-marker{ stroke:var(--bg-panel); stroke-width:1.5px; transition:r .15s; }

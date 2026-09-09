@@ -256,7 +256,24 @@
     </p>
 
     <figure>
-      <img src="../assets/img/fig_smallworld.png" alt="Two bar charts comparing the real network to randomized versions with the same degree sequence: clustering coefficient is 0.320 for the real network versus 0.155 randomized, while average shortest path length is nearly identical at 2.674 versus 2.604.">
+      <div class="degree-chart-card" id="smallworldChart">
+        <p class="degree-chart-title">Small-world check: giant component vs. 12 degree-preserving random rewirings</p>
+        <div class="degree-chart-panels">
+          <div class="degree-panel">
+            <h5 style="color:var(--hotpink)">clustering coefficient</h5>
+            <svg class="degree-svg" id="clusteringSvg" viewBox="0 0 460 380" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Clustering coefficient, real vs randomized, interactive"></svg>
+          </div>
+          <div class="degree-panel">
+            <h5 style="color:var(--cyan)">average shortest path</h5>
+            <svg class="degree-svg" id="pathSvg" viewBox="0 0 460 380" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Average shortest path, real vs randomized, interactive"></svg>
+          </div>
+        </div>
+        <p class="degree-chart-hint">Hover the randomized bar's dots to see each of the 12 individual rewiring runs.</p>
+        <div id="smallworldTooltip" class="graph-tooltip" hidden></div>
+      </div>
+      <noscript>
+        <img src="../assets/img/fig_smallworld.png" alt="Two bar charts comparing the real network to randomized versions with the same degree sequence: clustering coefficient is 0.320 for the real network versus 0.155 randomized, while average shortest path length is nearly identical at 2.674 versus 2.604.">
+      </noscript>
       <figcaption>
         Real network vs. the average of 12 degree-preserving rewirings. Clustering roughly
         doubles; path length barely changes.
@@ -278,7 +295,16 @@
     </p>
 
     <figure>
-      <img src="../assets/img/fig_powerlaw.png" alt="Log-log complementary cumulative distribution function plot of in-degree, with the raw data as pink dots and both a fitted power-law line and a fitted exponential line overlaid for comparison.">
+      <div class="degree-chart-card" id="powerlawChart">
+        <p class="degree-chart-title">Does the in-degree tail actually follow a power law?</p>
+        <svg class="centrality-svg" id="powerlawSvg" viewBox="0 0 820 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="In-degree CCDF with power law and exponential fits, log-log, interactive"></svg>
+        <div class="legend-row" id="powerlawLegend"></div>
+        <p class="degree-chart-hint">Hover (or tap) any point for exactly which characters sit there.</p>
+        <div id="powerlawTooltip" class="graph-tooltip" hidden></div>
+      </div>
+      <noscript>
+        <img src="../assets/img/fig_powerlaw.png" alt="Log-log complementary cumulative distribution function plot of in-degree, with the raw data as pink dots and both a fitted power-law line and a fitted exponential line overlaid for comparison.">
+      </noscript>
       <figcaption>
         In-degree CCDF with both fits overlaid. They agree almost everywhere except the very
         tail, which is exactly where a network of 303 nodes runs out of data to tell them apart.
@@ -300,45 +326,48 @@
 
 <script>
 (function () {
-  const degreeSvgEls = document.querySelectorAll(".degree-svg");
+  const degreeSvgEls = document.querySelectorAll(".degree-svg[data-key]"); // excludes the small-world bar-chart panels, which reuse the same visual class
   const communitySvgEl = document.getElementById("communitySvg");
   const centralitySvgEl = document.getElementById("centralitySvg");
-  if (!degreeSvgEls.length && !communitySvgEl && !centralitySvgEl) return;
+  const smallworldSvgEls = [document.getElementById("clusteringSvg"), document.getElementById("pathSvg")].filter(Boolean);
+  const powerlawSvgEl = document.getElementById("powerlawSvg");
+  if (!degreeSvgEls.length && !communitySvgEl && !centralitySvgEl && !smallworldSvgEls.length && !powerlawSvgEl) return;
 
-  // one fetch, shared by every interactive chart on this post
-  fetch("../assets/data/explore_data.json")
-    .then(r => r.json())
-    .then(data => {
-      if (degreeSvgEls.length) initDegreeCharts(data);
-      if (communitySvgEl) initCommunityGraph(data);
-      if (centralitySvgEl) initCentralityChart(data);
+  function fallback(cardId, imgSrc, imgAlt) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    card.innerHTML =
+      "<p style='color:var(--text-dim);font-size:.85rem;margin:0 0 12px;'>" +
+      "Couldn't load the interactive chart &mdash; showing the static version instead.</p>" +
+      "<img src='" + imgSrc + "' style='max-width:100%;border-radius:14px;border:1px solid var(--border);' alt='" + imgAlt + "'>";
+  }
+
+  // every chart on this post shares its fetches, so nothing is downloaded twice
+  const needsExplore = degreeSvgEls.length || communitySvgEl || centralitySvgEl;
+  Promise.all([
+    needsExplore ? fetch("../assets/data/explore_data.json").then(r => r.json()) : Promise.resolve(null),
+    smallworldSvgEls.length ? fetch("../assets/data/smallworld_data.json").then(r => r.json()) : Promise.resolve(null),
+    powerlawSvgEl ? fetch("../assets/data/powerlaw_data.json").then(r => r.json()) : Promise.resolve(null),
+  ])
+    .then(([exploreData, smallworldData, powerlawData]) => {
+      if (degreeSvgEls.length) initDegreeCharts(exploreData);
+      if (communitySvgEl) initCommunityGraph(exploreData);
+      if (centralitySvgEl) initCentralityChart(exploreData);
+      if (smallworldSvgEls.length) initSmallworldCharts(smallworldData);
+      if (powerlawSvgEl) initPowerlawChart(powerlawData);
     })
     .catch(err => {
       console.error(err);
-      if (degreeSvgEls.length) {
-        const card = document.getElementById("degreeChart");
-        card.innerHTML =
-          "<p style='color:var(--text-dim);font-size:.85rem;margin:0 0 12px;'>" +
-          "Couldn't load the interactive chart &mdash; showing the static version instead.</p>" +
-          "<img src='../assets/img/fig_degree_distributions.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);' " +
-          "alt='Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network.'>";
-      }
-      if (communitySvgEl) {
-        const card = document.getElementById("communityGraphCard");
-        card.innerHTML =
-          "<p style='color:var(--text-dim);font-size:.85rem;margin:0;'>" +
-          "Couldn't load the interactive graph &mdash; showing the static version instead.</p>" +
-          "<img src='../assets/img/fig_communities.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);margin-top:10px;' " +
-          "alt='The giant component network colored by Louvain community.'>";
-      }
-      if (centralitySvgEl) {
-        const card = document.getElementById("centralityChart");
-        card.innerHTML =
-          "<p style='color:var(--text-dim);font-size:.85rem;margin:0;'>" +
-          "Couldn't load the interactive chart &mdash; showing the static version instead.</p>" +
-          "<img src='../assets/img/fig_centrality.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);margin-top:10px;' " +
-          "alt='Log-log scatter plot of degree versus betweenness centrality, colored by community.'>";
-      }
+      if (degreeSvgEls.length) fallback("degreeChart", "../assets/img/fig_degree_distributions.png",
+        "Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network.");
+      if (communitySvgEl) fallback("communityGraphCard", "../assets/img/fig_communities.png",
+        "The giant component network colored by Louvain community.");
+      if (centralitySvgEl) fallback("centralityChart", "../assets/img/fig_centrality.png",
+        "Log-log scatter plot of degree versus betweenness centrality, colored by community.");
+      if (smallworldSvgEls.length) fallback("smallworldChart", "../assets/img/fig_smallworld.png",
+        "Two bar charts comparing the real network to randomized versions with the same degree sequence.");
+      if (powerlawSvgEl) fallback("powerlawChart", "../assets/img/fig_powerlaw.png",
+        "Log-log CCDF plot of in-degree with power-law and exponential fits overlaid.");
     });
 
   // ---------- degree-distribution log-log charts ----------
@@ -715,6 +744,225 @@
       tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
     }
   } // end initCentralityChart
+
+  // ---------- small-world bar charts (clustering + avg path) ----------
+  function initSmallworldCharts(data) {
+    const card = document.getElementById("smallworldChart");
+    const tooltip = document.getElementById("smallworldTooltip");
+
+    const PANELS = [
+      { svgId: "clusteringSvg", key: "clustering", color: "#ff2e9c", fmt: v => v.toFixed(3),
+        realDesc: "the chance that two of a character's co-linked neighbors are also linked to each other" },
+      { svgId: "pathSvg", key: "avg_path", color: "#00e5ff", fmt: v => v.toFixed(3),
+        realDesc: "average number of hops on the shortest path between two characters" },
+    ];
+
+    PANELS.forEach(panel => drawPanel(panel));
+
+    function drawPanel(panel) {
+      const runs = data.runs.map(r => r[panel.key]);
+      const realVal = data.real[panel.key];
+      const mean = runs.reduce((a, b) => a + b, 0) / runs.length;
+      const variance = runs.reduce((a, b) => a + (b - mean) ** 2, 0) / runs.length;
+      const stdev = Math.sqrt(variance);
+
+      const VBW = 460, VBH = 380;
+      const MARGIN = { top: 34, right: 20, bottom: 40, left: 50 };
+      const PW = VBW - MARGIN.left - MARGIN.right;
+      const PH = VBH - MARGIN.top - MARGIN.bottom;
+
+      const svg = d3.select("#" + panel.svgId);
+      const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+      const x = d3.scaleBand().domain(["real", "random"]).range([0, PW]).padding(0.45);
+      const yMax = Math.max(realVal, ...runs) * 1.2;
+      const y = d3.scaleLinear().domain([0, yMax]).range([PH, 0]);
+
+      g.append("g")
+        .attr("class", "degree-axis")
+        .call(d3.axisLeft(y).ticks(5).tickSizeOuter(0));
+
+      const bw = x.bandwidth();
+
+      // real network bar
+      const realX = x("real");
+      g.append("rect")
+        .attr("class", "sw-bar sw-bar-real")
+        .attr("x", realX).attr("width", bw)
+        .attr("y", y(realVal)).attr("height", PH - y(realVal))
+        .attr("fill", panel.color)
+        .on("mouseenter", ev => showTip(ev, panel.fmt(realVal), "real network — " + panel.realDesc))
+        .on("mousemove", moveTip)
+        .on("mouseleave", () => { tooltip.hidden = true; });
+      g.append("text")
+        .attr("class", "sw-bar-label")
+        .attr("x", realX + bw / 2).attr("y", y(realVal) - 8)
+        .text(panel.fmt(realVal));
+
+      // randomized: a bar at the mean, plus every individual rewiring run as
+      // a hoverable jittered dot, so the spread across the 12 runs is visible
+      // instead of hiding behind a single averaged error whisker
+      const randX = x("random");
+      g.append("rect")
+        .attr("class", "sw-bar sw-bar-random")
+        .attr("x", randX).attr("width", bw)
+        .attr("y", y(mean)).attr("height", PH - y(mean))
+        .on("mouseenter", ev => showTip(ev, panel.fmt(mean) + " avg",
+          `average of ${runs.length} degree-preserving rewirings (±${panel.fmt(stdev)} SD)`))
+        .on("mousemove", moveTip)
+        .on("mouseleave", () => { tooltip.hidden = true; });
+      g.append("text")
+        .attr("class", "sw-bar-label")
+        .attr("x", randX + bw / 2).attr("y", y(mean) - 8)
+        .text(panel.fmt(mean) + " avg");
+
+      const dotXs = jitter(runs.length, bw * 0.6);
+      const dotData = runs.map((v, i) => ({ v, i }));
+      g.selectAll(".sw-dot-hit")
+        .data(dotData)
+        .join("circle")
+        .attr("class", "sw-dot")
+        .attr("cx", d => randX + bw / 2 + dotXs[d.i])
+        .attr("cy", d => y(d.v))
+        .attr("r", 3.5)
+        .on("mouseenter", (ev, d) => showTip(ev, panel.fmt(d.v), `rewiring run #${d.i + 1} of ${runs.length}`))
+        .on("mousemove", moveTip)
+        .on("mouseleave", () => { tooltip.hidden = true; });
+
+      // category labels under each bar
+      g.append("text").attr("class", "degree-axislabel").attr("x", realX + bw / 2).attr("y", PH + 22)
+        .attr("text-anchor", "middle").text("real network");
+      g.append("text").attr("class", "degree-axislabel").attr("x", randX + bw / 2).attr("y", PH + 22)
+        .attr("text-anchor", "middle").text("randomized");
+      g.append("text").attr("class", "degree-axislabel").attr("x", randX + bw / 2).attr("y", PH + 34)
+        .attr("text-anchor", "middle").text("(same degrees)");
+    }
+
+    // deterministic small spread so repeated loads look identical
+    function jitter(n, spread) {
+      const out = [];
+      for (let i = 0; i < n; i++) out.push((((i * 2654435761) % 1000) / 1000 - 0.5) * spread);
+      return out;
+    }
+
+    function showTip(ev, headline, sub) {
+      tooltip.hidden = false;
+      tooltip.innerHTML = "";
+      const strong = document.createElement("strong");
+      strong.textContent = headline;
+      tooltip.appendChild(strong);
+      tooltip.appendChild(document.createElement("br"));
+      const span = document.createElement("span");
+      span.style.color = "var(--text-dim)";
+      span.textContent = sub;
+      tooltip.appendChild(span);
+      moveTip(ev);
+    }
+    function moveTip(ev) {
+      const rect = card.getBoundingClientRect();
+      tooltip.style.left = (ev.clientX - rect.left + 14) + "px";
+      tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
+    }
+  } // end initSmallworldCharts
+
+  // ---------- in-degree CCDF with power-law / exponential fits ----------
+  function initPowerlawChart(data) {
+    const card = document.getElementById("powerlawChart");
+    const tooltip = document.getElementById("powerlawTooltip");
+    const COLORS = { empirical: "#ff2e9c", power: "#ffe14d", exponential: "#00e5ff" };
+
+    const VBW = 820, VBH = 520;
+    const MARGIN = { top: 16, right: 24, bottom: 50, left: 64 };
+    const PW = VBW - MARGIN.left - MARGIN.right;
+    const PH = VBH - MARGIN.top - MARGIN.bottom;
+
+    const allP = data.empirical.map(d => d.p)
+      .concat(data.power_law_fit.map(d => d.p))
+      .concat(data.exponential_fit.map(d => d.p));
+    const xVals = data.empirical.map(d => d.k);
+
+    const x = d3.scaleLog().domain([d3.min(xVals) * 0.9, d3.max(xVals) * 1.1]).range([0, PW]);
+    const y = d3.scaleLog().domain([d3.min(allP) * 0.7, d3.max(allP) * 1.15]).range([PH, 0]);
+
+    const svg = d3.select("#powerlawSvg");
+    const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+    g.append("g")
+      .attr("class", "degree-axis")
+      .attr("transform", `translate(0,${PH})`)
+      .call(d3.axisBottom(x).ticks(6, "~s").tickSizeOuter(0));
+    g.append("g")
+      .attr("class", "degree-axis")
+      .call(d3.axisLeft(y).ticks(6, "~s").tickSizeOuter(0));
+
+    g.append("text").attr("class", "degree-axislabel")
+      .attr("x", PW / 2).attr("y", PH + 38).attr("text-anchor", "middle")
+      .text("in-degree k");
+    g.append("text").attr("class", "degree-axislabel")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -PH / 2).attr("y", -48).attr("text-anchor", "middle")
+      .text("P(K ≥ k)");
+
+    const line = d3.line().x(d => x(d.k)).y(d => y(d.p));
+
+    g.append("path").datum(data.exponential_fit)
+      .attr("class", "powerlaw-fit-line").attr("stroke", COLORS.exponential).attr("d", line);
+    g.append("path").datum(data.power_law_fit)
+      .attr("class", "powerlaw-fit-line").attr("stroke", COLORS.power).attr("d", line);
+
+    const ptG = g.selectAll(".powerlaw-pt")
+      .data(data.empirical)
+      .join("g")
+      .attr("class", "powerlaw-pt")
+      .attr("transform", d => `translate(${x(d.k)},${y(d.p)})`);
+
+    ptG.append("circle").attr("class", "centrality-marker").attr("r", 4).attr("fill", COLORS.empirical);
+    ptG.append("circle")
+      .attr("class", "centrality-hit")
+      .attr("r", 12)
+      .on("mouseenter", (ev, d) => showTip(ev, d))
+      .on("mousemove", moveTip)
+      .on("mouseleave", () => { tooltip.hidden = true; })
+      .on("click", (ev, d) => showTip(ev, d));
+
+    // legend
+    const legend = document.getElementById("powerlawLegend");
+    legend.innerHTML =
+      `<span class="legend-item"><span class="legend-dot" style="background:${COLORS.empirical}"></span>in-degree CCDF (hover a point)</span>` +
+      `<span class="legend-item"><span class="legend-dash" style="border-color:${COLORS.power}"></span>power law fit (α=${data.alpha.toFixed(2)}, x<sub>min</sub>=${data.xmin})</span>` +
+      `<span class="legend-item"><span class="legend-dash" style="border-color:${COLORS.exponential}"></span>exponential fit</span>`;
+
+    function showTip(ev, d) {
+      tooltip.hidden = false;
+      tooltip.innerHTML = "";
+      const strong = document.createElement("strong");
+      strong.textContent = `in-degree ≥ ${d.k}`;
+      tooltip.appendChild(strong);
+      tooltip.appendChild(document.createElement("br"));
+      const sub = document.createElement("span");
+      sub.style.color = "var(--text-dim)";
+      sub.textContent = `${Math.round(d.p * data.n_tail)} of ${data.n_tail} tail characters · P = ${d.p.toFixed(3)}`;
+      tooltip.appendChild(sub);
+      if (d.characters.length) {
+        tooltip.appendChild(document.createElement("br"));
+        const label = document.createElement("span");
+        label.style.color = "var(--text-dim)";
+        label.textContent = `exactly k=${d.k}: `;
+        tooltip.appendChild(label);
+        const shown = d.characters.slice(0, 6);
+        const more = d.characters.length - shown.length;
+        const names = document.createElement("span");
+        names.textContent = shown.join(", ") + (more > 0 ? `, +${more} more` : "");
+        tooltip.appendChild(names);
+      }
+      moveTip(ev);
+    }
+    function moveTip(ev) {
+      const rect = card.getBoundingClientRect();
+      tooltip.style.left = (ev.clientX - rect.left + 14) + "px";
+      tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
+    }
+  } // end initPowerlawChart
 })();
 </script>
 
