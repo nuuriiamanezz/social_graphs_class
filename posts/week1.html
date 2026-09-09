@@ -224,7 +224,15 @@
     </p>
 
     <figure>
-      <img src="../assets/img/fig_centrality.png" alt="Log-log scatter plot of degree versus betweenness centrality for every character in the giant component, colored by community, with five low-degree, high-betweenness bridge characters circled and labeled: Rockman, Stingray, Red Wolf, Brian Braddock, and Solo.">
+      <div class="degree-chart-card" id="centralityChart">
+        <p class="degree-chart-title">Degree vs. betweenness centrality — the bridges circled in yellow</p>
+        <svg class="centrality-svg" id="centralitySvg" viewBox="0 0 820 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Degree versus betweenness centrality scatter, log-log, interactive"></svg>
+        <p class="degree-chart-hint">Hover (or tap) any point for its degree, betweenness rank, and community.</p>
+        <div id="centralityTooltip" class="graph-tooltip" hidden></div>
+      </div>
+      <noscript>
+        <img src="../assets/img/fig_centrality.png" alt="Log-log scatter plot of degree versus betweenness centrality for every character in the giant component, colored by community, with five low-degree, high-betweenness bridge characters circled and labeled: Rockman, Stingray, Red Wolf, Brian Braddock, and Solo.">
+      </noscript>
       <figcaption>
         Degree vs. betweenness for every character in the giant component. Most points sit on
         the expected diagonal &mdash; more links, more betweenness &mdash; but the circled
@@ -294,7 +302,8 @@
 (function () {
   const degreeSvgEls = document.querySelectorAll(".degree-svg");
   const communitySvgEl = document.getElementById("communitySvg");
-  if (!degreeSvgEls.length && !communitySvgEl) return;
+  const centralitySvgEl = document.getElementById("centralitySvg");
+  if (!degreeSvgEls.length && !communitySvgEl && !centralitySvgEl) return;
 
   // one fetch, shared by every interactive chart on this post
   fetch("../assets/data/explore_data.json")
@@ -302,6 +311,7 @@
     .then(data => {
       if (degreeSvgEls.length) initDegreeCharts(data);
       if (communitySvgEl) initCommunityGraph(data);
+      if (centralitySvgEl) initCentralityChart(data);
     })
     .catch(err => {
       console.error(err);
@@ -320,6 +330,14 @@
           "Couldn't load the interactive graph &mdash; showing the static version instead.</p>" +
           "<img src='../assets/img/fig_communities.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);margin-top:10px;' " +
           "alt='The giant component network colored by Louvain community.'>";
+      }
+      if (centralitySvgEl) {
+        const card = document.getElementById("centralityChart");
+        card.innerHTML =
+          "<p style='color:var(--text-dim);font-size:.85rem;margin:0;'>" +
+          "Couldn't load the interactive chart &mdash; showing the static version instead.</p>" +
+          "<img src='../assets/img/fig_centrality.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);margin-top:10px;' " +
+          "alt='Log-log scatter plot of degree versus betweenness centrality, colored by community.'>";
       }
     });
 
@@ -560,6 +578,108 @@
       tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
     }
   } // end initCommunityGraph
+
+  // ---------- degree vs. betweenness centrality scatter ----------
+  function initCentralityChart(data) {
+    const PALETTE = {
+      c0: "#ff2e9c", c1: "#00e5ff", c2: "#ffe14d", c3: "#7dff9e", c4: "#ff5f5f",
+      c5: "#8f7bff", c6: "#ff8a3d", c7: "#4dd0e1",
+    };
+    // the five low-degree, high-betweenness structural bridges called out in
+    // the prose above — kept as an explicit list (rather than re-derived
+    // client-side) so the labeled points always match what the text says
+    const BRIDGES = ["Rockman_(character)", "Stingray_(Marvel_Comics)", "Red_Wolf_(comics)",
+                      "Brian_Braddock", "Solo_(Marvel_Comics)"];
+    const FLOOR = 0.000008; // zero-betweenness characters still get plotted, near the bottom
+
+    const card = document.getElementById("centralityChart");
+    const tooltip = document.getElementById("centralityTooltip");
+
+    // only the giant component has a betweenness value at all
+    const points = data.nodes.filter(n => n.bet !== null);
+
+    const VBW = 820, VBH = 520;
+    const MARGIN = { top: 16, right: 24, bottom: 50, left: 58 };
+    const PW = VBW - MARGIN.left - MARGIN.right;
+    const PH = VBH - MARGIN.top - MARGIN.bottom;
+
+    const xMax = d3.max(points, d => d.deg + 1);
+    const yVals = points.map(d => Math.max(d.bet, FLOOR));
+    const yMax = d3.max(yVals);
+
+    const x = d3.scaleLog().domain([1, xMax]).range([0, PW]);
+    const y = d3.scaleLog().domain([FLOOR * 0.7, yMax * 1.25]).range([PH, 0]);
+
+    const svg = d3.select("#centralitySvg");
+    const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+    g.append("g")
+      .attr("class", "degree-axis")
+      .attr("transform", `translate(0,${PH})`)
+      .call(d3.axisBottom(x).ticks(5, "~s").tickSizeOuter(0));
+    g.append("g")
+      .attr("class", "degree-axis")
+      .call(d3.axisLeft(y).ticks(6, "~s").tickSizeOuter(0));
+
+    g.append("text")
+      .attr("class", "degree-axislabel")
+      .attr("x", PW / 2).attr("y", PH + 38).attr("text-anchor", "middle")
+      .text("degree + 1 (how many links)");
+    g.append("text")
+      .attr("class", "degree-axislabel")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -PH / 2).attr("y", -42).attr("text-anchor", "middle")
+      .text("betweenness centrality (how much of a shortcut)");
+
+    const ptG = g.selectAll(".centrality-pt")
+      .data(points)
+      .join("g")
+      .attr("class", "centrality-pt")
+      .attr("transform", d => `translate(${x(d.deg + 1)},${y(Math.max(d.bet, FLOOR))})`);
+
+    ptG.append("circle")
+      .attr("class", "centrality-marker")
+      .attr("r", 4)
+      .attr("fill", d => PALETTE[d.ctag] || "#888");
+
+    ptG.filter(d => BRIDGES.includes(d.id))
+      .append("circle")
+      .attr("class", "centrality-bridge-ring")
+      .attr("r", 9);
+
+    ptG.filter(d => BRIDGES.includes(d.id))
+      .append("text")
+      .attr("class", "centrality-bridge-label")
+      .attr("x", 12).attr("y", -10)
+      .text(d => d.name.replace(" (character)", ""));
+
+    ptG.append("circle")
+      .attr("class", "centrality-hit")
+      .attr("r", 12)
+      .on("mouseenter", (ev, d) => showTip(ev, d))
+      .on("mousemove", moveTip)
+      .on("mouseleave", () => { tooltip.hidden = true; })
+      .on("click", (ev, d) => showTip(ev, d));
+
+    function showTip(ev, d) {
+      tooltip.hidden = false;
+      tooltip.innerHTML = "";
+      const strong = document.createElement("strong");
+      strong.textContent = d.name.replace(" (character)", "");
+      tooltip.appendChild(strong);
+      tooltip.appendChild(document.createElement("br"));
+      const sub = document.createElement("span");
+      sub.style.color = "var(--text-dim)";
+      sub.textContent = `degree ${d.deg} · betweenness rank #${d.betRank} of 277 · ${d.clabel}`;
+      tooltip.appendChild(sub);
+      moveTip(ev);
+    }
+    function moveTip(ev) {
+      const rect = card.getBoundingClientRect();
+      tooltip.style.left = (ev.clientX - rect.left + 14) + "px";
+      tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
+    }
+  } // end initCentralityChart
 })();
 </script>
 
