@@ -188,7 +188,19 @@
     </p>
 
     <figure>
-      <img src="../assets/img/fig_communities.png" alt="The giant component network redrawn with nodes colored by Louvain community instead of degree, forming eight visually distinct clusters, each labeled with its highest-degree member: Spider-Man, Wolverine, Hulk, Doctor Strange, Black Panther, She-Hulk, Human Torch, and Scarlet Witch.">
+      <div class="explore-graph-card community-graph-card" id="communityGraphCard">
+        <svg class="community-graph-svg" id="communitySvg" viewBox="-980 -1020 1960 2040" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Marvel character network colored by community, interactive — pan, zoom, hover a node or a legend chip"></svg>
+        <div id="communityTooltip" class="graph-tooltip" hidden></div>
+      </div>
+      <div class="legend-row" id="communityLegend"></div>
+      <p class="degree-chart-hint">
+        Drag to pan, scroll to zoom, hover a node for its stats — or hover (or tap) a
+        legend chip to light up that whole community.
+        <a href="../explore.html">Explore all 303 characters yourself &rarr;</a>
+      </p>
+      <noscript>
+        <img src="../assets/img/fig_communities.png" alt="The giant component network redrawn with nodes colored by Louvain community instead of degree, forming eight visually distinct clusters, each labeled with its highest-degree member: Spider-Man, Wolverine, Hulk, Doctor Strange, Black Panther, She-Hulk, Human Torch, and Scarlet Witch.">
+      </noscript>
       <figcaption>
         Same layout as before, recolored by community instead of degree. Eight clusters,
         each labeled by its own biggest hub — link structure alone gets you most of the way
@@ -280,9 +292,39 @@
 
 <script>
 (function () {
-  const svgEls = document.querySelectorAll(".degree-svg");
-  if (!svgEls.length) return;
+  const degreeSvgEls = document.querySelectorAll(".degree-svg");
+  const communitySvgEl = document.getElementById("communitySvg");
+  if (!degreeSvgEls.length && !communitySvgEl) return;
 
+  // one fetch, shared by every interactive chart on this post
+  fetch("../assets/data/explore_data.json")
+    .then(r => r.json())
+    .then(data => {
+      if (degreeSvgEls.length) initDegreeCharts(data);
+      if (communitySvgEl) initCommunityGraph(data);
+    })
+    .catch(err => {
+      console.error(err);
+      if (degreeSvgEls.length) {
+        const card = document.getElementById("degreeChart");
+        card.innerHTML =
+          "<p style='color:var(--text-dim);font-size:.85rem;margin:0 0 12px;'>" +
+          "Couldn't load the interactive chart &mdash; showing the static version instead.</p>" +
+          "<img src='../assets/img/fig_degree_distributions.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);' " +
+          "alt='Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network.'>";
+      }
+      if (communitySvgEl) {
+        const card = document.getElementById("communityGraphCard");
+        card.innerHTML =
+          "<p style='color:var(--text-dim);font-size:.85rem;margin:0;'>" +
+          "Couldn't load the interactive graph &mdash; showing the static version instead.</p>" +
+          "<img src='../assets/img/fig_communities.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);margin-top:10px;' " +
+          "alt='The giant component network colored by Louvain community.'>";
+      }
+    });
+
+  // ---------- degree-distribution log-log charts ----------
+  function initDegreeCharts(data) {
   const card = document.getElementById("degreeChart");
   const tooltip = document.getElementById("degreeTooltip");
   const COLORS = { in: "#ff2e9c", out: "#00e5ff" };
@@ -292,19 +334,7 @@
   const PW = VBW - MARGIN.left - MARGIN.right;
   const PH = VBH - MARGIN.top - MARGIN.bottom;
 
-  fetch("../assets/data/explore_data.json")
-    .then(r => r.json())
-    .then(data => {
-      svgEls.forEach(svgEl => drawPanel(svgEl, data.nodes, svgEl.dataset.key));
-    })
-    .catch(err => {
-      card.innerHTML =
-        "<p style='color:var(--text-dim);font-size:.85rem;margin:0 0 12px;'>" +
-        "Couldn't load the interactive chart &mdash; showing the static version instead.</p>" +
-        "<img src='../assets/img/fig_degree_distributions.png' style='max-width:100%;border-radius:14px;border:1px solid var(--border);' " +
-        "alt='Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network.'>";
-      console.error(err);
-    });
+  degreeSvgEls.forEach(svgEl => drawPanel(svgEl, data.nodes, svgEl.dataset.key));
 
   // Groups characters by exact degree value (raw distribution), then folds
   // that into geometrically-spaced bins (count / bin width) so the trend
@@ -414,6 +444,122 @@
     tooltip.style.left = (ev.clientX - rect.left + 14) + "px";
     tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
   }
+  } // end initDegreeCharts
+
+  // ---------- community network graph ----------
+  function initCommunityGraph(data) {
+    const PALETTE = {
+      c0: "#ff2e9c", c1: "#00e5ff", c2: "#ffe14d", c3: "#7dff9e", c4: "#ff5f5f",
+      c5: "#8f7bff", c6: "#ff8a3d", c7: "#4dd0e1",
+      morituri: "#00e5ff", isolate: "#5c4a63",
+    };
+    const SCALE = 100;
+    const svgX = x => x * SCALE;
+    const svgY = y => -y * SCALE;
+
+    const card = document.getElementById("communityGraphCard");
+    const tooltip = document.getElementById("communityTooltip");
+    const nodeById = new Map(data.nodes.map(n => [n.id, n]));
+
+    const svg = d3.select(communitySvgEl);
+    const g = svg.append("g");
+    const edgeLayer = g.append("g");
+    const nodeLayer = g.append("g");
+    const labelLayer = g.append("g");
+
+    const zoom = d3.zoom().scaleExtent([0.5, 8]).on("zoom", ev => g.attr("transform", ev.transform));
+    svg.call(zoom);
+
+    edgeLayer.selectAll("line")
+      .data(data.edges)
+      .join("line")
+      .attr("class", "graph-edge")
+      .attr("x1", e => svgX(nodeById.get(e.s).x)).attr("y1", e => svgY(nodeById.get(e.s).y))
+      .attr("x2", e => svgX(nodeById.get(e.t).x)).attr("y2", e => svgY(nodeById.get(e.t).y));
+
+    nodeLayer.selectAll("circle")
+      .data(data.nodes, d => d.id)
+      .join("circle")
+      .attr("class", "graph-node")
+      .attr("cx", d => svgX(d.x)).attr("cy", d => svgY(d.y))
+      .attr("r", d => 4 + Math.sqrt(d.deg) * 2.1)
+      .attr("fill", d => PALETTE[d.ctag] || "#888")
+      .on("mouseenter", (ev, d) => showTip(ev, d))
+      .on("mousemove", moveTip)
+      .on("mouseleave", () => { tooltip.hidden = true; })
+      .on("click", (ev, d) => { ev.stopPropagation(); highlightCommunity(d.ctag); });
+
+    svg.on("click", clearHighlight);
+
+    // direct label on each community's own biggest hub, same idea as the
+    // static figure — skipped for "isolate" since every isolate is degree 0
+    const order = [];
+    for (let i = 0; i < data.nComm; i++) order.push(`c${i}`);
+    order.push("morituri", "isolate");
+
+    const byTag = new Map(order.map(t => [t, []]));
+    data.nodes.forEach(n => { if (byTag.has(n.ctag)) byTag.get(n.ctag).push(n); });
+
+    order.forEach(tag => {
+      const list = byTag.get(tag);
+      if (!list.length || tag === "isolate") return;
+      const top = list.reduce((a, b) => (b.deg > a.deg ? b : a));
+      const r = 4 + Math.sqrt(top.deg) * 2.1;
+      labelLayer.append("text")
+        .attr("class", "community-node-label")
+        .attr("x", svgX(top.x)).attr("y", svgY(top.y) - r - 6)
+        .attr("text-anchor", "middle")
+        .attr("fill", PALETTE[tag])
+        .text(top.name.replace(" (character)", ""));
+    });
+
+    // legend: names come straight off clabel, so it always matches the
+    // Explore page's naming for the same communities
+    const legend = document.getElementById("communityLegend");
+    legend.innerHTML = order.map(tag => {
+      const list = byTag.get(tag);
+      const name = list.length ? list[0].clabel : tag;
+      return `<span class="legend-item" data-tag="${tag}"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${name}</span>`;
+    }).join("");
+    legend.querySelectorAll(".legend-item").forEach(el => {
+      const tag = el.dataset.tag;
+      el.addEventListener("mouseenter", () => highlightCommunity(tag));
+      el.addEventListener("mouseleave", clearHighlight);
+      el.addEventListener("click", () => highlightCommunity(tag));
+    });
+
+    function highlightCommunity(tag) {
+      nodeLayer.selectAll("circle")
+        .classed("hl", n => n.ctag === tag)
+        .classed("dim", n => n.ctag !== tag);
+      edgeLayer.selectAll("line")
+        .classed("hl", e => nodeById.get(e.s).ctag === tag && nodeById.get(e.t).ctag === tag)
+        .classed("dim", e => nodeById.get(e.s).ctag !== tag && nodeById.get(e.t).ctag !== tag);
+    }
+    function clearHighlight() {
+      nodeLayer.selectAll("circle").classed("hl", false).classed("dim", false);
+      edgeLayer.selectAll("line").classed("hl", false).classed("dim", false);
+    }
+
+    function showTip(ev, d) {
+      tooltip.hidden = false;
+      tooltip.innerHTML = "";
+      const strong = document.createElement("strong");
+      strong.textContent = d.name.replace(" (character)", "");
+      tooltip.appendChild(strong);
+      tooltip.appendChild(document.createElement("br"));
+      const sub = document.createElement("span");
+      sub.style.color = "var(--text-dim)";
+      sub.textContent = `degree ${d.deg} · ${d.clabel}`;
+      tooltip.appendChild(sub);
+      moveTip(ev);
+    }
+    function moveTip(ev) {
+      const rect = card.getBoundingClientRect();
+      tooltip.style.left = (ev.clientX - rect.left + 14) + "px";
+      tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
+    }
+  } // end initCommunityGraph
 })();
 </script>
 

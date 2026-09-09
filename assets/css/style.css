@@ -256,6 +256,19 @@ article figure img{
 }
 article figcaption{ color:var(--text-dim); font-size:.85rem; margin-top:10px; }
 
+/* ---------- interactive community network graph (week 1) ---------- */
+.community-graph-svg{
+  width:100%; height:560px; display:block;
+  background:radial-gradient(circle at 50% 45%, rgba(196,0,255,.08), transparent 60%);
+  border-radius:12px;
+  cursor:grab;
+}
+.community-node-label{
+  font-family:'Poppins', sans-serif; font-weight:700; font-size:15px;
+  paint-order:stroke; stroke:var(--bg-panel); stroke-width:3px; stroke-linejoin:round;
+  pointer-events:none;
+}
+
 /* ---------- interactive degree-distribution chart (week 1) ---------- */
 .degree-chart-card{
   position:relative;
