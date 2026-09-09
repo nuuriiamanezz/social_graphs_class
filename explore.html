@@ -106,7 +106,7 @@ fetch("assets/data/explore_data.json")
       neighbors.get(e.t).add(e.s);
     });
     draw(data);
-    buildLegend(data.nComm);
+    buildLegend(data);
   })
   .catch(err => {
     document.getElementById("statsPanel").innerHTML =
@@ -223,14 +223,20 @@ function renderStats(d, nbrs) {
   });
 }
 
-function buildLegend(nComm) {
-  const labels = [];
-  for (let i = 0; i < nComm; i++) labels.push([`c${i}`, `community ${i}`]);
-  labels.push(["morituri", "the Morituri"]);
-  labels.push(["isolate", "isolate"]);
+function buildLegend(data) {
+  // pull each community's display name straight from clabel, so the legend
+  // always matches the tooltip/stats panel — relabel a community by editing
+  // explore_data.json, nothing here needs to change.
+  const nameByTag = new Map();
+  data.nodes.forEach(n => { if (!nameByTag.has(n.ctag)) nameByTag.set(n.ctag, n.clabel); });
+
+  const order = [];
+  for (let i = 0; i < data.nComm; i++) order.push(`c${i}`);
+  order.push("morituri", "isolate");
+
   const row = document.getElementById("legendRow");
-  row.innerHTML = labels.map(([tag, label]) =>
-    `<span class="legend-item"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${label}</span>`
+  row.innerHTML = order.map(tag =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${nameByTag.get(tag) || tag}</span>`
   ).join("");
 }
 

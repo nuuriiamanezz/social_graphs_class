@@ -142,7 +142,6 @@ nav.site-nav a:hover{ color:var(--hotpink); border-color:var(--hotpink); text-de
 .post-list h3{ display:inline; font-size:1.08rem; color:var(--text); margin:0; }
 .post-list p{ margin:8px 0 0; color:var(--text-dim); font-size:.92rem; }
 
-/* ---------- lifeline progress (EKG pulse) ---------- */
 /* ---------- lifeline progress (plain bar + week circles) ---------- */
 .lifeline-card{ padding:22px 26px 26px; }
 .lifeline-top{
