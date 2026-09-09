@@ -29,7 +29,26 @@ week1.ipynb           the analysis notebook this week's post is drawn from
 2. In `index.html`, replace that week's `<div class="post-placeholder">…</div>`
    with an `<a class="post-link" href="posts/weekN.html">…</a>` entry (same
    markup shape as the week 1 entry) so it becomes clickable.
-3. In `index.html`, update the lifeline: move `class="current"` to the new
-   week's segment, add `class="filled"` to the one you just finished, and bump
-   the `N / 8 weeks` count.
+3. In `index.html`, update the lifeline (the EKG-style `<svg class="lifeline-svg">`):
+   - Replace the `.life-pulse` path's `d` attribute and the `.life-dot`'s `cx`
+     with the values for the week you just finished, from the table below.
+   - Move `class="done"` up to that week's `<text>` label, and `class="next"`
+     to the following week's label (drop it entirely after week 8).
+   - Bump the `N / 8 weeks` count.
 4. Commit and push — GitHub Pages redeploys automatically.
+
+Pulse path `d` / dot `cx` per completed-weeks count (copy the row for how many
+weeks are now done):
+
+| weeks done | `.life-pulse` `d` | `.life-dot` `cx` |
+|---|---|---|
+| 2 | `M0,60 L15,60 L25,15 L35,105 L45,60 L100,60 L115,60 L125,15 L135,105 L145,60 L200,60` | `200` |
+| 3 | `M0,60 L15,60 L25,15 L35,105 L45,60 L100,60 L115,60 L125,15 L135,105 L145,60 L200,60 L215,60 L225,15 L235,105 L245,60 L300,60` | `300` |
+| 4 | `M0,60 L15,60 L25,15 L35,105 L45,60 L100,60 L115,60 L125,15 L135,105 L145,60 L200,60 L215,60 L225,15 L235,105 L245,60 L300,60 L315,60 L325,15 L335,105 L345,60 L400,60` | `400` |
+| 5 | `M0,60 L15,60 L25,15 L35,105 L45,60 L100,60 L115,60 L125,15 L135,105 L145,60 L200,60 L215,60 L225,15 L235,105 L245,60 L300,60 L315,60 L325,15 L335,105 L345,60 L400,60 L415,60 L425,15 L435,105 L445,60 L500,60` | `500` |
+| 6 | `M0,60 L15,60 L25,15 L35,105 L45,60 L100,60 L115,60 L125,15 L135,105 L145,60 L200,60 L215,60 L225,15 L235,105 L245,60 L300,60 L315,60 L325,15 L335,105 L345,60 L400,60 L415,60 L425,15 L435,105 L445,60 L500,60 L515,60 L525,15 L535,105 L545,60 L600,60` | `600` |
+| 7 | `M0,60 L15,60 L25,15 L35,105 L45,60 L100,60 L115,60 L125,15 L135,105 L145,60 L200,60 L215,60 L225,15 L235,105 L245,60 L300,60 L315,60 L325,15 L335,105 L345,60 L400,60 L415,60 L425,15 L435,105 L445,60 L500,60 L515,60 L525,15 L535,105 L545,60 L600,60 L615,60 L625,15 L635,105 L645,60 L700,60` | `700` |
+| 8 (done!) | `M0,60 L15,60 L25,15 L35,105 L45,60 L100,60 L115,60 L125,15 L135,105 L145,60 L200,60 L215,60 L225,15 L235,105 L245,60 L300,60 L315,60 L325,15 L335,105 L345,60 L400,60 L415,60 L425,15 L435,105 L445,60 L500,60 L515,60 L525,15 L535,105 L545,60 L600,60 L615,60 L625,15 L635,105 L645,60 L700,60 L715,60 L725,15 L735,105 L745,60 L800,60` | `800` |
+
+At 8/8, also remove the `.life-dot` circle entirely (or drop its pulse
+animation) so the lifeline reads as finished rather than still "searching."

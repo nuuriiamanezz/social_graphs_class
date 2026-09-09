@@ -142,45 +142,41 @@ nav.site-nav a:hover{ color:var(--hotpink); border-color:var(--hotpink); text-de
 .post-list h3{ display:inline; font-size:1.08rem; color:var(--text); margin:0; }
 .post-list p{ margin:8px 0 0; color:var(--text-dim); font-size:.92rem; }
 
-/* ---------- lifeline progress ---------- */
-.lifeline-card{
-  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
-  padding:20px 26px;
+/* ---------- lifeline progress (EKG pulse) ---------- */
+.lifeline-card{ padding:22px 26px 14px; }
+.lifeline-top{
+  display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  margin-bottom:4px;
 }
 .lifeline-label{
-  font-family:'Bangers', cursive; letter-spacing:.5px; font-size:1.05rem;
-  color:var(--yellow); white-space:nowrap;
+  font-family:'Bangers', cursive; letter-spacing:.5px; font-size:1.15rem;
+  color:var(--yellow);
 }
-.lifeline{
-  flex:1 1 260px; display:flex; gap:6px; min-width:200px;
+.lifeline-count{ color:var(--text-dim); font-size:.85rem; }
+
+.lifeline-svg{ width:100%; height:auto; display:block; overflow:visible; }
+.life-track{
+  fill:none; stroke:var(--border); stroke-width:3; stroke-linejoin:round; stroke-linecap:round;
 }
-.life-seg{
-  flex:1; height:16px; border-radius:6px;
-  background:var(--bg-panel-2);
-  border:1px solid var(--border);
-  position:relative;
-  overflow:hidden;
+.life-pulse{
+  fill:none; stroke:var(--hotpink); stroke-width:4; stroke-linejoin:round; stroke-linecap:round;
+  filter: drop-shadow(0 0 5px rgba(255,46,156,.9)) drop-shadow(0 0 14px rgba(196,0,255,.6));
 }
-.life-seg.filled{
-  background:linear-gradient(90deg, var(--magenta), var(--hotpink));
-  border-color:var(--hotpink);
-  box-shadow:0 0 10px rgba(255,46,156,.55);
+.life-dot{
+  fill:var(--cyan);
+  filter: drop-shadow(0 0 6px rgba(0,229,255,.95));
+  animation: dot-pulse 1.4s ease-in-out infinite;
 }
-.life-seg.current{
-  background:linear-gradient(90deg, var(--hotpink), var(--cyan));
-  border-color:var(--cyan);
-  box-shadow:0 0 12px rgba(0,229,255,.6);
-  animation:pulse-seg 1.6s ease-in-out infinite;
+@keyframes dot-pulse{
+  0%,100%{ r:6; opacity:1; }
+  50%{ r:9; opacity:.6; }
 }
-@keyframes pulse-seg{
-  0%,100%{ opacity:1; }
-  50%{ opacity:.55; }
+.life-week-label{
+  font-size:13px; font-weight:700; fill:var(--text-dim); text-anchor:middle;
+  font-family:'Poppins', sans-serif;
 }
-.life-seg .num{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  font-size:.62rem; font-weight:700; color:var(--text); opacity:.75;
-}
-.lifeline-count{ color:var(--text-dim); font-size:.85rem; white-space:nowrap; }
+.life-week-label.done{ fill:var(--hotpink); }
+.life-week-label.next{ fill:var(--cyan); }
 
 /* ---------- locked / upcoming post placeholders ---------- */
 .post-placeholder{
