@@ -142,6 +142,64 @@ nav.site-nav a:hover{ color:var(--hotpink); border-color:var(--hotpink); text-de
 .post-list h3{ display:inline; font-size:1.08rem; color:var(--text); margin:0; }
 .post-list p{ margin:8px 0 0; color:var(--text-dim); font-size:.92rem; }
 
+/* ---------- lifeline progress ---------- */
+.lifeline-card{
+  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  padding:20px 26px;
+}
+.lifeline-label{
+  font-family:'Bangers', cursive; letter-spacing:.5px; font-size:1.05rem;
+  color:var(--yellow); white-space:nowrap;
+}
+.lifeline{
+  flex:1 1 260px; display:flex; gap:6px; min-width:200px;
+}
+.life-seg{
+  flex:1; height:16px; border-radius:6px;
+  background:var(--bg-panel-2);
+  border:1px solid var(--border);
+  position:relative;
+  overflow:hidden;
+}
+.life-seg.filled{
+  background:linear-gradient(90deg, var(--magenta), var(--hotpink));
+  border-color:var(--hotpink);
+  box-shadow:0 0 10px rgba(255,46,156,.55);
+}
+.life-seg.current{
+  background:linear-gradient(90deg, var(--hotpink), var(--cyan));
+  border-color:var(--cyan);
+  box-shadow:0 0 12px rgba(0,229,255,.6);
+  animation:pulse-seg 1.6s ease-in-out infinite;
+}
+@keyframes pulse-seg{
+  0%,100%{ opacity:1; }
+  50%{ opacity:.55; }
+}
+.life-seg .num{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:.62rem; font-weight:700; color:var(--text); opacity:.75;
+}
+.lifeline-count{ color:var(--text-dim); font-size:.85rem; white-space:nowrap; }
+
+/* ---------- locked / upcoming post placeholders ---------- */
+.post-placeholder{
+  display:flex; align-items:baseline; gap:10px;
+  padding:16px 22px;
+  border-radius:14px;
+  background:transparent;
+  border:1.5px dashed var(--border);
+  margin-bottom:14px;
+  opacity:.55;
+  cursor:not-allowed;
+}
+.post-placeholder .week-badge{
+  font-family:'Bangers', cursive;
+  color:var(--text-dim); font-size:1.15rem; letter-spacing:.5px;
+}
+.post-placeholder .placeholder-label{ color:var(--text-dim); font-size:.95rem; }
+.post-placeholder .lock{ margin-left:auto; font-size:.85rem; color:var(--text-dim); }
+
 footer{
   margin-top:60px; padding:28px 0 40px; border-top:1px solid var(--border);
   color:var(--text-dim); font-size:.85rem;
