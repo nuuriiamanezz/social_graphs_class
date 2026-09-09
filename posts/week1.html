@@ -268,7 +268,7 @@
             <svg class="degree-svg" id="pathSvg" viewBox="0 0 460 380" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Average shortest path, real vs randomized, interactive"></svg>
           </div>
         </div>
-        <p class="degree-chart-hint">Hover the randomized bar's dots to see each of the 12 individual rewiring runs.</p>
+        <p class="degree-chart-hint">Hover either bar for the exact value.</p>
         <div id="smallworldTooltip" class="graph-tooltip" hidden></div>
       </div>
       <noscript>
@@ -799,9 +799,7 @@
         .attr("x", realX + bw / 2).attr("y", y(realVal) - 8)
         .text(panel.fmt(realVal));
 
-      // randomized: a bar at the mean, plus every individual rewiring run as
-      // a hoverable jittered dot, so the spread across the 12 runs is visible
-      // instead of hiding behind a single averaged error whisker
+      // randomized: a bar at the mean of 12 degree-preserving rewirings
       const randX = x("random");
       g.append("rect")
         .attr("class", "sw-bar sw-bar-random")
@@ -816,19 +814,6 @@
         .attr("x", randX + bw / 2).attr("y", y(mean) - 8)
         .text(panel.fmt(mean) + " avg");
 
-      const dotXs = jitter(runs.length, bw * 0.6);
-      const dotData = runs.map((v, i) => ({ v, i }));
-      g.selectAll(".sw-dot-hit")
-        .data(dotData)
-        .join("circle")
-        .attr("class", "sw-dot")
-        .attr("cx", d => randX + bw / 2 + dotXs[d.i])
-        .attr("cy", d => y(d.v))
-        .attr("r", 3.5)
-        .on("mouseenter", (ev, d) => showTip(ev, panel.fmt(d.v), `rewiring run #${d.i + 1} of ${runs.length}`))
-        .on("mousemove", moveTip)
-        .on("mouseleave", () => { tooltip.hidden = true; });
-
       // category labels under each bar
       g.append("text").attr("class", "degree-axislabel").attr("x", realX + bw / 2).attr("y", PH + 22)
         .attr("text-anchor", "middle").text("real network");
@@ -836,13 +821,6 @@
         .attr("text-anchor", "middle").text("randomized");
       g.append("text").attr("class", "degree-axislabel").attr("x", randX + bw / 2).attr("y", PH + 34)
         .attr("text-anchor", "middle").text("(same degrees)");
-    }
-
-    // deterministic small spread so repeated loads look identical
-    function jitter(n, spread) {
-      const out = [];
-      for (let i = 0; i < n; i++) out.push((((i * 2654435761) % 1000) / 1000 - 0.5) * spread);
-      return out;
     }
 
     function showTip(ev, headline, sub) {

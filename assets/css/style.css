@@ -277,12 +277,6 @@ article figcaption{ color:var(--text-dim); font-size:.85rem; margin-top:10px; }
   fill:var(--text); font-family:'Poppins', sans-serif; font-weight:700; font-size:13px;
   text-anchor:middle;
 }
-.sw-dot{
-  fill:var(--yellow); stroke:var(--bg-panel); stroke-width:1.5px; cursor:pointer;
-  transition:r .15s;
-}
-.sw-dot:hover{ r:5.5; filter:drop-shadow(0 0 4px rgba(255,225,77,.8)); }
-
 /* ---------- interactive power-law CCDF chart (week 1) ---------- */
 .powerlaw-fit-line{ fill:none; stroke-width:2px; stroke-dasharray:6 4; opacity:.9; }
 .legend-dash{
