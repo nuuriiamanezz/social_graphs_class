@@ -14,13 +14,23 @@ Live site: `https://<github-username>.github.io/social_graphs_class/`
 ## Structure
 
 ```
-index.html          home page, list of posts
-posts/week1.html     week 1: degree distributions + connected components
-assets/css/style.css site styling
-assets/img/          figures used in posts
-data_1/              week-1 frozen data snapshot (edges + node roster)
-week1.ipynb           the analysis notebook this week's post is drawn from
+index.html               home page, list of posts, EKG lifeline
+explore.html              search + interactive graph over all 303 characters
+posts/week1.html          week 1: degree distributions + connected components
+assets/css/style.css      site styling
+assets/img/               figures used in posts + favicon/OG image
+assets/data/explore_data.json  per-character stats + layout + edges, powers explore.html
+assets/favicon.svg        browser-tab icon
+data_1/                   week-1 frozen data snapshot (edges + node roster)
+week1.ipynb                the analysis notebook this week's post is drawn from
+export_explore_data.py    (not in repo yet — regenerate assets/data/explore_data.json
+                           from graph.pkl/extended.pkl if the underlying analysis changes)
 ```
+
+`explore.html` loads D3 from a CDN (`cdn.jsdelivr.net`) and fetches
+`assets/data/explore_data.json` — both need real internet + same-origin serving
+to work, so it won't render correctly opened as a bare `file://` path; test it
+through `python3 -m http.server` locally, or just check it live on GitHub Pages.
 
 ## Adding next week's post
 

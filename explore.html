@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explore | WebCrawl</title>
+<meta name="description" content="Search all 303 Marvel characters and explore the hyperlink network interactively — pan, zoom, click a node to see its stats and neighbors.">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Explore | WebCrawl">
+<meta property="og:description" content="Search all 303 Marvel characters and explore the hyperlink network interactively.">
+<meta property="og:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_network_art.png">
+<meta property="og:url" content="https://nuuriiamanezz.github.io/social_graphs_class/explore.html">
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">WebCrawl</span>
+      <span class="tag">02805 Social Graphs &amp; Interactions · DTU</span>
+    </div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="posts/week1.html">Latest post</a>
+      <a href="explore.html" style="color:var(--hotpink);">Explore</a>
+      <a href="https://sunelehmann.com/socialgraphs2026-web/data/">Course data</a>
+      <a href="https://github.com/nuuriiamanezz/social_graphs_class">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="post-header" style="padding-top:36px;">
+    <span class="week-badge">Explore</span>
+    <h1>Poke the network yourself</h1>
+    <p class="post-meta">All 303 characters, live — search a name, or click around the graph. Drag to pan, scroll to zoom.</p>
+  </div>
+
+  <div class="card" style="padding:20px 22px;">
+    <div class="explore-search-row">
+      <input id="searchBox" type="text" placeholder="Search a character… (try “Spider-Man” or “Rockman”)" autocomplete="off">
+      <button id="resetBtn" class="reset-btn" type="button">Reset view</button>
+    </div>
+    <div id="suggestions" class="suggestions" hidden></div>
+  </div>
+
+  <div class="card explore-graph-card">
+    <svg id="graphSvg" viewBox="-980 -1020 1960 2040" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="tooltip" class="graph-tooltip" hidden></div>
+  </div>
+
+  <div id="statsPanel" class="card stats-panel">
+    <p class="stats-placeholder">Search above or click any node to see its stats — degree, PageRank,
+    betweenness centrality, which community it's in, and who it's directly linked to.</p>
+  </div>
+
+  <div class="legend-row" id="legendRow"></div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="group-credit">Nuria Máñez Molina (s234523) · Nour Marak (s234700) · Marah Osama Marak (s182946)</span>
+    <span>Built with an LLM, styled with too much pink.</span>
+  </div>
+</footer>
+
+<script>
+const PALETTE = {
+  c0: "#ff2e9c", c1: "#00e5ff", c2: "#ffe14d", c3: "#7dff9e", c4: "#ff5f5f",
+  c5: "#8f7bff", c6: "#ff8a3d", c7: "#4dd0e1",
+  morituri: "#00e5ff", isolate: "#5c4a63"
+};
+const SCALE = 100; // data units -> svg units
+
+let DATA = null, nodeById = null, neighbors = null, selectedId = null;
+
+const svg = d3.select("#graphSvg");
+const g = svg.append("g");
+const edgeLayer = g.append("g").attr("class", "edge-layer");
+const nodeLayer = g.append("g").attr("class", "node-layer");
+const tooltip = document.getElementById("tooltip");
+
+const zoom = d3.zoom().scaleExtent([0.5, 12]).on("zoom", (ev) => {
+  g.attr("transform", ev.transform);
+});
+svg.call(zoom);
+
+function svgX(x) { return x * SCALE; }
+function svgY(y) { return -y * SCALE; } // flip so +y is up, matching the static figures
+
+fetch("assets/data/explore_data.json")
+  .then(r => r.json())
+  .then(data => {
+    DATA = data;
+    nodeById = new Map(data.nodes.map(n => [n.id, n]));
+    neighbors = new Map(data.nodes.map(n => [n.id, new Set()]));
+    data.edges.forEach(e => {
+      neighbors.get(e.s).add(e.t);
+      neighbors.get(e.t).add(e.s);
+    });
+    draw(data);
+    buildLegend(data.nComm);
+  })
+  .catch(err => {
+    document.getElementById("statsPanel").innerHTML =
+      "<p class='stats-placeholder'>Couldn't load the character data (assets/data/explore_data.json) — try refreshing.</p>";
+    console.error(err);
+  });
+
+function draw(data) {
+  edgeLayer.selectAll("line")
+    .data(data.edges)
+    .join("line")
+    .attr("class", "graph-edge")
+    .attr("x1", e => svgX(nodeById.get(e.s).x))
+    .attr("y1", e => svgY(nodeById.get(e.s).y))
+    .attr("x2", e => svgX(nodeById.get(e.t).x))
+    .attr("y2", e => svgY(nodeById.get(e.t).y))
+    .attr("data-s", e => e.s)
+    .attr("data-t", e => e.t);
+
+  nodeLayer.selectAll("circle")
+    .data(data.nodes, d => d.id)
+    .join("circle")
+    .attr("class", "graph-node")
+    .attr("cx", d => svgX(d.x))
+    .attr("cy", d => svgY(d.y))
+    .attr("r", d => 4 + Math.sqrt(d.deg) * 2.1)
+    .attr("fill", d => PALETTE[d.ctag] || "#888")
+    .attr("data-id", d => d.id)
+    .on("mouseenter", (ev, d) => showTooltip(ev, d))
+    .on("mousemove", (ev) => moveTooltip(ev))
+    .on("mouseleave", hideTooltip)
+    .on("click", (ev, d) => { ev.stopPropagation(); selectNode(d.id, true); });
+
+  svg.on("click", () => clearSelection());
+}
+
+function showTooltip(ev, d) {
+  tooltip.hidden = false;
+  tooltip.innerHTML = `<strong>${d.name}</strong><br>degree ${d.deg} · ${d.clabel}`;
+  moveTooltip(ev);
+}
+function moveTooltip(ev) {
+  const card = document.querySelector(".explore-graph-card");
+  const rect = card.getBoundingClientRect();
+  tooltip.style.left = (ev.clientX - rect.left + 14) + "px";
+  tooltip.style.top = (ev.clientY - rect.top + 10) + "px";
+}
+function hideTooltip() { tooltip.hidden = true; }
+
+function clearSelection() {
+  selectedId = null;
+  nodeLayer.selectAll("circle").classed("dim", false).classed("hl", false);
+  edgeLayer.selectAll("line").classed("dim", false).classed("hl", false);
+  document.getElementById("statsPanel").innerHTML =
+    "<p class='stats-placeholder'>Search above or click any node to see its stats — degree, PageRank, " +
+    "betweenness centrality, which community it's in, and who it's directly linked to.</p>";
+}
+
+function selectNode(id, recenter) {
+  selectedId = id;
+  const d = nodeById.get(id);
+  const nbrs = neighbors.get(id) || new Set();
+
+  nodeLayer.selectAll("circle")
+    .classed("hl", n => n.id === id)
+    .classed("dim", n => n.id !== id && !nbrs.has(n.id));
+
+  edgeLayer.selectAll("line")
+    .classed("hl", e => e.s === id || e.t === id)
+    .classed("dim", e => e.s !== id && e.t !== id);
+
+  renderStats(d, nbrs);
+
+  if (recenter) {
+    const scale = 2.4;
+    const tx = -svgX(d.x) * scale;
+    const ty = -svgY(d.y) * scale;
+    svg.transition().duration(600)
+      .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+  }
+}
+
+function renderStats(d, nbrs) {
+  const nbrList = [...nbrs].map(id => nodeById.get(id)).sort((a, b) => b.deg - a.deg);
+  const shown = nbrList.slice(0, 14);
+  const more = nbrList.length - shown.length;
+
+  const betRow = d.bet !== null
+    ? `<div class="stat-cell"><span class="stat-num">#${d.betRank}</span><span class="stat-lbl">betweenness rank (of 277)</span></div>`
+    : `<div class="stat-cell"><span class="stat-num">—</span><span class="stat-lbl">not in giant component</span></div>`;
+
+  document.getElementById("statsPanel").innerHTML = `
+    <div class="stats-head">
+      <h3>${d.name}</h3>
+      <a href="${d.url}" target="_blank" rel="noopener">Wikipedia ↗</a>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-cell"><span class="stat-num">${d.in}</span><span class="stat-lbl">in-degree</span></div>
+      <div class="stat-cell"><span class="stat-num">${d.out}</span><span class="stat-lbl">out-degree</span></div>
+      <div class="stat-cell"><span class="stat-num">${d.deg}</span><span class="stat-lbl">undirected degree</span></div>
+      <div class="stat-cell"><span class="stat-num">#${d.degRank}</span><span class="stat-lbl">degree rank (of 303)</span></div>
+      <div class="stat-cell"><span class="stat-num">#${d.prRank}</span><span class="stat-lbl">PageRank rank</span></div>
+      ${betRow}
+    </div>
+    <p class="stats-community">Community: <strong style="color:${PALETTE[d.ctag] || '#fff'}">${d.clabel}</strong></p>
+    <p class="stats-neighbors-label">Directly linked to (${nbrList.length}):</p>
+    <div class="chip-row">
+      ${shown.map(n => `<span class="chip" data-id="${n.id}">${n.name.replace(" (character)", "")}</span>`).join("")}
+      ${more > 0 ? `<span class="chip chip-more">+${more} more</span>` : ""}
+    </div>
+  `;
+  document.querySelectorAll(".chip[data-id]").forEach(el => {
+    el.addEventListener("click", () => selectNode(el.dataset.id, true));
+  });
+}
+
+function buildLegend(nComm) {
+  const labels = [];
+  for (let i = 0; i < nComm; i++) labels.push([`c${i}`, `community ${i}`]);
+  labels.push(["morituri", "the Morituri"]);
+  labels.push(["isolate", "isolate"]);
+  const row = document.getElementById("legendRow");
+  row.innerHTML = labels.map(([tag, label]) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${label}</span>`
+  ).join("");
+}
+
+// ---------- search ----------
+const searchBox = document.getElementById("searchBox");
+const suggestions = document.getElementById("suggestions");
+
+searchBox.addEventListener("input", () => {
+  const q = searchBox.value.trim().toLowerCase();
+  if (!q || !DATA) { suggestions.hidden = true; return; }
+  const matches = DATA.nodes
+    .filter(n => n.name.toLowerCase().includes(q))
+    .sort((a, b) => b.deg - a.deg)
+    .slice(0, 8);
+  if (!matches.length) { suggestions.hidden = true; return; }
+  suggestions.innerHTML = matches.map(n =>
+    `<div class="suggestion-item" data-id="${n.id}">${n.name} <span class="sugg-deg">deg ${n.deg}</span></div>`
+  ).join("");
+  suggestions.hidden = false;
+  suggestions.querySelectorAll(".suggestion-item").forEach(el => {
+    el.addEventListener("click", () => {
+      selectNode(el.dataset.id, true);
+      searchBox.value = nodeById.get(el.dataset.id).name;
+      suggestions.hidden = true;
+    });
+  });
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  searchBox.value = "";
+  suggestions.hidden = true;
+  clearSelection();
+  svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+});
+</script>
+
+</body>
+</html>
