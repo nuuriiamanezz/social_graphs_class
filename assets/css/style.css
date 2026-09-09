@@ -1,0 +1,204 @@
+/* WebCrawl — DTU Social Graphs & Interactions, group site
+   pink / comic-book theme */
+
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root{
+  --bg:            #120014;
+  --bg-panel:      #1c0722;
+  --bg-panel-2:    #260a2e;
+  --hotpink:       #ff2e9c;
+  --magenta:       #c400ff;
+  --cyan:          #00e5ff;
+  --yellow:        #ffe14d;
+  --text:          #fdf1fb;
+  --text-dim:      #cba8c9;
+  --grid:          #3a1f3f;
+  --border:        #4a2450;
+  --shadow-pink:   0 0 24px rgba(255,46,156,.35);
+  --shadow-cyan:   0 0 24px rgba(0,229,255,.30);
+}
+
+*{ box-sizing:border-box; }
+
+html{ scroll-behavior:smooth; }
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 12% 8%,  rgba(196,0,255,.16), transparent 40%),
+    radial-gradient(circle at 90% 0%,  rgba(0,229,255,.10), transparent 35%),
+    radial-gradient(circle at 50% 100%,rgba(255,46,156,.12), transparent 45%),
+    var(--bg);
+  background-attachment: fixed;
+  color:var(--text);
+  font-family:'Poppins', system-ui, sans-serif;
+  line-height:1.65;
+}
+
+/* halftone dot texture strip, comic style */
+.halftone{
+  background-image: radial-gradient(var(--hotpink) 1.4px, transparent 1.6px);
+  background-size: 14px 14px;
+  opacity:.35;
+}
+
+a{ color:var(--cyan); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+
+.wrap{ max-width:920px; margin:0 auto; padding:0 24px; }
+
+/* ---------- header / nav ---------- */
+header.site{
+  position:relative;
+  padding:20px 0 14px;
+  border-bottom:3px solid var(--hotpink);
+  box-shadow: var(--shadow-pink);
+  background: linear-gradient(180deg, rgba(255,46,156,.08), transparent);
+}
+header.site .wrap{
+  display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+}
+.brand{
+  display:flex; align-items:baseline; gap:10px;
+}
+.brand .logo{
+  font-family:'Bangers', cursive;
+  font-size:2.3rem;
+  letter-spacing:1px;
+  color:var(--hotpink);
+  text-shadow: 0 0 10px rgba(255,46,156,.7), 0 0 26px rgba(196,0,255,.5);
+  transform: rotate(-2deg);
+  display:inline-block;
+}
+.brand .tag{ color:var(--text-dim); font-size:.82rem; }
+nav.site-nav a{
+  margin-left:18px;
+  color:var(--text);
+  font-weight:600;
+  font-size:.92rem;
+  padding:6px 4px;
+  border-bottom:2px solid transparent;
+}
+nav.site-nav a:hover{ color:var(--hotpink); border-color:var(--hotpink); text-decoration:none; }
+
+/* ---------- hero ---------- */
+.hero{ position:relative; padding:56px 0 40px; overflow:hidden; }
+.hero .burst{
+  position:absolute; top:-60px; right:-60px; width:280px; height:280px;
+  background: conic-gradient(from 0deg, var(--magenta), var(--hotpink), var(--yellow), var(--cyan), var(--magenta));
+  clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  filter: blur(.3px);
+  opacity:.22;
+}
+.hero h1{
+  font-family:'Bangers', cursive;
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  letter-spacing:1px;
+  margin:0 0 8px;
+  color:var(--text);
+  text-shadow: 0 0 18px rgba(255,46,156,.35);
+}
+.hero h1 .hl{ color:var(--cyan); text-shadow:0 0 18px rgba(0,229,255,.5); }
+.hero p.lede{ max-width:640px; color:var(--text-dim); font-size:1.05rem; }
+
+.chip{
+  display:inline-block; padding:4px 12px; border-radius:999px;
+  background:var(--bg-panel-2); border:1px solid var(--border);
+  color:var(--yellow); font-size:.78rem; font-weight:600; letter-spacing:.5px;
+  margin-right:8px;
+}
+
+/* ---------- cards / posts list ---------- */
+.card{
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:26px 28px;
+  margin:20px 0;
+  position:relative;
+}
+.card.pink{ box-shadow: var(--shadow-pink); border-color: rgba(255,46,156,.5); }
+.card.cyan{ box-shadow: var(--shadow-cyan); border-color: rgba(0,229,255,.4); }
+
+.post-list a.post-link{
+  display:block;
+  padding:18px 22px;
+  border-radius:14px;
+  background:var(--bg-panel-2);
+  border:1px solid var(--border);
+  margin-bottom:14px;
+  transition:.15s transform ease, .15s box-shadow ease;
+}
+.post-list a.post-link:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-pink);
+  text-decoration:none;
+}
+.post-list .week-badge{
+  font-family:'Bangers', cursive;
+  color:var(--hotpink); font-size:1.15rem; letter-spacing:.5px; margin-right:10px;
+}
+.post-list h3{ display:inline; font-size:1.08rem; color:var(--text); margin:0; }
+.post-list p{ margin:8px 0 0; color:var(--text-dim); font-size:.92rem; }
+
+footer{
+  margin-top:60px; padding:28px 0 40px; border-top:1px solid var(--border);
+  color:var(--text-dim); font-size:.85rem;
+}
+footer .wrap{ display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+/* ---------- post page ---------- */
+.post-header{ padding:44px 0 10px; }
+.post-header .week-badge{
+  font-family:'Bangers', cursive; color:var(--hotpink); font-size:1.3rem;
+}
+.post-header h1{
+  font-family:'Bangers', cursive;
+  font-size:clamp(2rem, 5vw, 2.8rem);
+  margin:6px 0 10px;
+  letter-spacing:.5px;
+}
+.post-meta{ color:var(--text-dim); font-size:.88rem; margin-bottom:8px; }
+
+article h2{
+  font-family:'Bangers', cursive;
+  color:var(--cyan);
+  letter-spacing:.5px;
+  font-size:1.55rem;
+  margin-top:38px;
+  text-shadow:0 0 12px rgba(0,229,255,.3);
+}
+article p{ font-size:1rem; }
+article figure{ margin: 26px 0; text-align:center; }
+article figure img{
+  max-width:100%; border-radius:14px; border:1px solid var(--border);
+  box-shadow: var(--shadow-pink);
+}
+article figcaption{ color:var(--text-dim); font-size:.85rem; margin-top:10px; }
+
+table.stat-table{
+  width:100%; border-collapse:collapse; margin:18px 0 8px; font-size:.92rem;
+}
+table.stat-table th, table.stat-table td{
+  text-align:left; padding:9px 12px; border-bottom:1px solid var(--border);
+}
+table.stat-table th{ color:var(--yellow); font-weight:600; }
+table.stat-table td.num{ color:var(--cyan); font-variant-numeric: tabular-nums; }
+
+.callout{
+  border-left:4px solid var(--hotpink);
+  background:var(--bg-panel-2);
+  padding:16px 20px;
+  border-radius:0 12px 12px 0;
+  margin:24px 0;
+}
+.callout strong{ color:var(--yellow); }
+
+.back-link{ display:inline-block; margin-top:32px; }
+
+@media (max-width:600px){
+  .wrap{ padding:0 16px; }
+  header.site .wrap{ flex-direction:column; align-items:flex-start; }
+  nav.site-nav a{ margin-left:0; margin-right:16px; }
+}

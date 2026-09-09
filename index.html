@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebCrawl — Social Graphs &amp; Interactions</title>
+<meta name="description" content="A DTU Social Graphs and Interactions group site: weekly interactive data stories mined from the Marvel Comics superheroes hyperlink network.">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">WebCrawl</span>
+      <span class="tag">02805 Social Graphs &amp; Interactions · DTU</span>
+    </div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="posts/week1.html">Latest post</a>
+      <a href="https://sunelehmann.com/socialgraphs2026-web/data/">Course data</a>
+      <a href="https://github.com/nuuriiamanezz/social_graphs_class">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div class="burst"></div>
+    <span class="chip">Go nuts with your LLM 🚀</span>
+    <span class="chip">Week 1 · Bootstrap edition</span>
+    <h1>Our little corner of the <span class="hl">Marvel</span> hyperlink universe</h1>
+    <p class="lede">
+      Every week this course hands us the same 303 characters from Wikipedia's
+      <em>Category:Marvel Comics superheroes</em> and a new tool. We poke at it, make
+      something, and write down what we found. This is where that lands — eight posts,
+      one dataset, growing all semester.
+    </p>
+  </section>
+
+  <div class="card pink">
+    <h2 style="font-family:'Bangers',cursive; color:var(--hotpink); margin-top:0; letter-spacing:.5px;">
+      The playground
+    </h2>
+    <p>
+      303 Marvel characters, one node each, and a directed edge whenever one character's
+      Wikipedia article links to another's — 1,784 links in total, harvested straight from
+      the wiki-source <code>[[Page name]]</code> syntax. Dense, hub-riddled, and frozen as a
+      shared snapshot so every group in the class computes on identical data. This half of
+      the course we mine its <em>structure</em>; from week 5, its <em>text</em>.
+    </p>
+  </div>
+
+  <section class="post-list">
+    <h2 style="font-family:'Bangers',cursive; color:var(--cyan); letter-spacing:.5px;">Posts</h2>
+
+    <a class="post-link" href="posts/week1.html">
+      <span class="week-badge">Wk 1</span><h3>Islands in the web: degrees, hubs, and a 9-character team nobody links to</h3>
+      <p>Loading the frozen snapshot properly (isolates included), in- vs out-degree on log–log axes,
+      and drawing the whole thing as one piece of network art — plus the corner of the Marvel wiki
+      that never talks to the rest.</p>
+    </a>
+
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="group-credit">Made by Nuria</span>
+    <span>Built with an LLM, styled with too much pink.</span>
+  </div>
+</footer>
+
+</body>
+</html>

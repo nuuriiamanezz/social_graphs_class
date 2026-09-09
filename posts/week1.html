@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 1 — Islands in the web | WebCrawl</title>
+<meta name="description" content="Week 1 go-nuts post: degree distributions, in- vs out-degree, and the connected components of the Marvel Wikipedia hyperlink network.">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">WebCrawl</span>
+      <span class="tag">02805 Social Graphs &amp; Interactions · DTU</span>
+    </div>
+    <nav class="site-nav">
+      <a href="../index.html">Home</a>
+      <a href="week1.html">Latest post</a>
+      <a href="https://sunelehmann.com/socialgraphs2026-web/data/">Course data</a>
+      <a href="https://github.com/nuuriiamanezz/social_graphs_class">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="post-header">
+    <span class="week-badge">Week 1 — Bootstrap edition</span>
+    <h1>Islands in the web: degrees, hubs, and a 9-character team nobody links to</h1>
+    <p class="post-meta">Marvel Comics superheroes hyperlink network · week-1 frozen snapshot (2026-08-26) · 303 nodes, 1,784 directed edges</p>
+  </div>
+
+  <article>
+
+    <h2>What we asked</h2>
+    <p>
+      The assignment's numbers check out easily enough: load the snapshot, get n = 303 and
+      1,784 directed edges, collapse to 1,434 undirected pairs, average degree ⟨k⟩ ≈ 9.5.
+      The more interesting questions sit just past those numbers. Who actually holds this
+      network together, and who's just along for the ride? In- and out-degree are supposed
+      to look different because they're generated differently — does that actually show up
+      once you plot it? And "everyone reachable from everyone" is doing a lot of work in
+      that average degree — is that even true, or are there characters sitting entirely
+      outside the story?
+    </p>
+
+    <h2>What we did</h2>
+    <p>
+      We loaded <code>week1_nodes.tsv</code> and <code>week1_edges.tsv</code>, adding every
+      node to the graph <em>before</em> the edges, so the 17 characters with no links in
+      either direction survive as isolated nodes instead of silently disappearing. From the
+      resulting directed graph we pulled in-degree and out-degree for every character, plotted
+      both on linear and log&ndash;log axes, and overlaid the log-binned curve (width-1 bins
+      up to k+1=7, doubling after that, each bin's count divided by its width and placed at
+      the geometric mean of the degrees it covers) so the sparse tail doesn't get lost in noise.
+    </p>
+    <p>
+      Then we went looking for structure the summary statistics hide: we collapsed the graph
+      to undirected and ran connected components on it, to see whether "the network" is really
+      one thing or several. And because a hairball of 303 circles and 1,434 lines tells you
+      nothing just sitting there, we laid the whole thing out as one image — every character
+      placed by a spring layout, sized and colored by degree, with anything outside the giant
+      component pushed out to where it visually belongs: the edge.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_network_art.png" alt="The full Marvel hyperlink network drawn as one image: a dense central cluster of 277 characters colored cyan to magenta by degree, with Spider-Man as the largest hot-pink hub near the center, a separate 9-node cyan cluster labeled 'the Morituri' off to one side, and 17 grey isolated dots scattered around the outer edge.">
+      <figcaption>
+        All 303 characters, one layout. Node size and color track undirected degree
+        (cyan → magenta = low → high). The giant component sits center stage; everything
+        that isn't part of it — the Morituri cluster and 17 lone isolates — is pushed to
+        the margins, which is exactly where they sit structurally too.
+      </figcaption>
+    </figure>
+
+    <h2>The figure that mattered most</h2>
+    <p>
+      In-degree and out-degree measure genuinely different behaviors, and plotting them
+      side by side on log&ndash;log axes makes that obvious in a way the raw numbers don't.
+      In-degree stretches all the way out to Spider-Man at k = 106; out-degree tops out at
+      Betsy Braddock with just 28. That's not a coincidence — an in-link is <em>conferred</em>:
+      some other article's editors, independently, decided this character was worth
+      mentioning. There's no ceiling on how many different pages can point at Spider-Man.
+      An out-link is <em>authored</em>: someone has to sit down and physically write it into
+      one specific page, and any one editor writing any one article eventually stops. One
+      mechanism has no ceiling, the other has a human one — and the tail length of each
+      distribution shows it directly.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_degree_distributions.png" alt="Two log-log scatter plots comparing in-degree and out-degree distributions of the Marvel character network, with raw points and a log-binned line overlay for each.">
+      <figcaption>
+        In-degree (left, pink) vs. out-degree (right, cyan) on log&ndash;log axes, degree
+        k+1 so isolates stay visible. Both look roughly linear once binned — but the
+        in-degree line runs nearly twice as far along the x-axis before it runs out of data.
+      </figcaption>
+    </figure>
+
+    <table class="stat-table">
+      <thead>
+        <tr><th>Rank</th><th>Top in-degree (cited by)</th><th class="num">k</th><th>Top out-degree (cites)</th><th class="num">k</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Spider-Man</td><td class="num">106</td><td>Betsy Braddock</td><td class="num">28</td></tr>
+        <tr><td>2</td><td>Hulk</td><td class="num">64</td><td>Cloak and Dagger</td><td class="num">24</td></tr>
+        <tr><td>3</td><td>Wolverine</td><td class="num">60</td><td>Adam Warlock</td><td class="num">22</td></tr>
+        <tr><td>4</td><td>Doctor Strange</td><td class="num">50</td><td>Venom</td><td class="num">21</td></tr>
+        <tr><td>5</td><td>Deadpool</td><td class="num">33</td><td>She-Hulk</td><td class="num">20</td></tr>
+      </tbody>
+    </table>
+
+    <h2>What surprised us</h2>
+    <p>
+      We expected isolates — the dataset's own header warns you there are 17 of them, lone
+      characters nobody linked and who link to no one. What we didn't expect was a
+      <strong>second kind of exile</strong>: a fully self-contained cluster of nine characters
+      &mdash; Backhand, Blackthorn, Radian, Scaredycat, Scatterbrain, Shear, Snapdragon, Toxyn
+      and Vyking, the Strikeforce: Morituri team &mdash; that link densely to each other and
+      to absolutely nobody else in the other 294 characters. Component analysis found it
+      instantly; eyeballing the hairball never would have.
+    </p>
+
+    <div class="callout">
+      <strong>91.4%</strong> of the network sits in one giant, everyone-reaches-everyone
+      component (277 of 303 characters). The rest splits into <strong>18 islands</strong>:
+      one real 9-node team and 17 true isolates &mdash; degree zero, in and out. ⟨k⟩ ≈ 9.5
+      describes the giant component well; it says nothing about the other 8.6% of the network.
+    </div>
+
+    <p>
+      Our read: a team page that only cross-links within its own roster is a plausible,
+      almost boring editorial choice — nobody sat down and added "see also: Spider-Man" to
+      Scatterbrain's article, and nobody added a link to Scatterbrain from anywhere bigger
+      either. It's a reminder that "the giant component" and "the network" are not the same
+      claim, and that summary statistics like ⟨k⟩ quietly assume they are.
+    </p>
+
+  </article>
+
+  <a class="back-link" href="../index.html">&larr; Back to all posts</a>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="group-credit">Made by Nuria</span>
+    <span>02805 Social Graphs &amp; Interactions, DTU — Week 1</span>
+  </div>
+</footer>
+
+</body>
+</html>
