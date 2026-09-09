@@ -325,6 +325,7 @@ table.stat-table td.num{ color:var(--cyan); font-variant-numeric: tabular-nums; 
 .suggestion-item:last-child{ border-bottom:none; }
 .suggestion-item:hover{ background:rgba(255,46,156,.12); color:var(--hotpink); }
 .sugg-deg{ color:var(--text-dim); font-size:.78rem; }
+.suggestion-community{ background:rgba(255,255,255,.03); font-family:'Poppins', sans-serif; font-weight:600; }
 
 .explore-graph-card{ position:relative; padding:10px; }
 #graphSvg{

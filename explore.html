@@ -39,12 +39,12 @@
   <div class="post-header" style="padding-top:36px;">
     <span class="week-badge">Explore</span>
     <h1>Poke the network yourself</h1>
-    <p class="post-meta">All 303 characters, live — search a name, or click around the graph. Drag to pan, scroll to zoom.</p>
+    <p class="post-meta">All 303 characters and 8 named communities, live — search a name or a community, click a legend chip, or click around the graph. Drag to pan, scroll to zoom.</p>
   </div>
 
   <div class="card" style="padding:20px 22px;">
     <div class="explore-search-row">
-      <input id="searchBox" type="text" placeholder="Search a character… (try “Spider-Man” or “Rockman”)" autocomplete="off">
+      <input id="searchBox" type="text" placeholder="Search a character or community… (try “Spider-Man” or “X-Men”)" autocomplete="off">
       <button id="resetBtn" class="reset-btn" type="button">Reset view</button>
     </div>
     <div id="suggestions" class="suggestions" hidden></div>
@@ -57,7 +57,8 @@
 
   <div id="statsPanel" class="card stats-panel">
     <p class="stats-placeholder">Search above or click any node to see its stats — degree, PageRank,
-    betweenness centrality, which community it's in, and who it's directly linked to.</p>
+    betweenness centrality, which community it's in, and who it's directly linked to. Search a community
+    name (like &ldquo;X-Men&rdquo; or &ldquo;Cosmic Avengers&rdquo;) instead to see that whole group's stats.</p>
   </div>
 
   <div class="legend-row" id="legendRow"></div>
@@ -80,6 +81,12 @@ const PALETTE = {
 const SCALE = 100; // data units -> svg units
 
 let DATA = null, nodeById = null, neighbors = null, selectedId = null;
+let COMMUNITY = null, selectedCommunityTag = null;
+
+const STATS_PLACEHOLDER =
+  "<p class='stats-placeholder'>Search above or click any node to see its stats — degree, PageRank, " +
+  "betweenness centrality, which community it's in, and who it's directly linked to. Search a community " +
+  "name (like “X-Men” or “Cosmic Avengers”) instead to see that whole group's stats.</p>";
 
 const svg = d3.select("#graphSvg");
 const g = svg.append("g");
@@ -105,6 +112,7 @@ fetch("assets/data/explore_data.json")
       neighbors.get(e.s).add(e.t);
       neighbors.get(e.t).add(e.s);
     });
+    COMMUNITY = buildCommunityIndex(data);
     draw(data);
     buildLegend(data);
   })
@@ -158,15 +166,15 @@ function hideTooltip() { tooltip.hidden = true; }
 
 function clearSelection() {
   selectedId = null;
+  selectedCommunityTag = null;
   nodeLayer.selectAll("circle").classed("dim", false).classed("hl", false);
   edgeLayer.selectAll("line").classed("dim", false).classed("hl", false);
-  document.getElementById("statsPanel").innerHTML =
-    "<p class='stats-placeholder'>Search above or click any node to see its stats — degree, PageRank, " +
-    "betweenness centrality, which community it's in, and who it's directly linked to.</p>";
+  document.getElementById("statsPanel").innerHTML = STATS_PLACEHOLDER;
 }
 
 function selectNode(id, recenter) {
   selectedId = id;
+  selectedCommunityTag = null;
   const d = nodeById.get(id);
   const nbrs = neighbors.get(id) || new Set();
 
@@ -224,26 +232,60 @@ function renderStats(d, nbrs) {
 }
 
 function buildLegend(data) {
-  // pull each community's display name straight from clabel, so the legend
-  // always matches the tooltip/stats panel — relabel a community by editing
-  // explore_data.json, nothing here needs to change.
-  const nameByTag = new Map();
-  data.nodes.forEach(n => { if (!nameByTag.has(n.ctag)) nameByTag.set(n.ctag, n.clabel); });
-
-  const order = [];
-  for (let i = 0; i < data.nComm; i++) order.push(`c${i}`);
-  order.push("morituri", "isolate");
-
+  // names/order come from the shared COMMUNITY index (built off clabel), so
+  // the legend always matches the tooltip/stats panel/search results —
+  // relabel a community by editing explore_data.json, nothing here changes.
   const row = document.getElementById("legendRow");
-  row.innerHTML = order.map(tag =>
-    `<span class="legend-item" data-tag="${tag}"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${nameByTag.get(tag) || tag}</span>`
+  row.innerHTML = COMMUNITY.order.map(tag =>
+    `<span class="legend-item" data-tag="${tag}"><span class="legend-dot" style="background:${PALETTE[tag]}"></span>${COMMUNITY.name.get(tag) || tag}</span>`
   ).join("");
 
   row.querySelectorAll(".legend-item").forEach(el => {
     const tag = el.dataset.tag;
     el.addEventListener("mouseenter", () => highlightCommunity(tag));
     el.addEventListener("mouseleave", () => restoreView());
+    el.addEventListener("click", () => selectCommunity(tag, true));
   });
+}
+
+// Groups nodes by community once the data is in: per-tag member lists (sorted
+// by degree), display names, and aggregate stats (size, avg degree/PageRank,
+// how many edges stay inside the group vs. leave it) used by the legend,
+// search suggestions, and the community stats panel.
+function buildCommunityIndex(data) {
+  const order = [];
+  for (let i = 0; i < data.nComm; i++) order.push(`c${i}`);
+  order.push("morituri", "isolate");
+
+  const members = new Map(order.map(t => [t, []]));
+  data.nodes.forEach(n => { if (members.has(n.ctag)) members.get(n.ctag).push(n); });
+  members.forEach(list => list.sort((a, b) => b.deg - a.deg));
+
+  const name = new Map();
+  members.forEach((list, tag) => { if (list.length) name.set(tag, list[0].clabel); });
+
+  const internal = new Map(order.map(t => [t, 0]));
+  const external = new Map(order.map(t => [t, 0]));
+  data.edges.forEach(e => {
+    const a = nodeById.get(e.s), b = nodeById.get(e.t);
+    if (a.ctag === b.ctag) {
+      internal.set(a.ctag, internal.get(a.ctag) + 1);
+    } else {
+      external.set(a.ctag, (external.get(a.ctag) || 0) + 1);
+      external.set(b.ctag, (external.get(b.ctag) || 0) + 1);
+    }
+  });
+
+  const stats = new Map();
+  order.forEach(tag => {
+    const list = members.get(tag);
+    const size = list.length;
+    const avgDeg = size ? list.reduce((sum, n) => sum + n.deg, 0) / size : 0;
+    const avgPr = size ? list.reduce((sum, n) => sum + n.pr, 0) / size : 0;
+    stats.set(tag, { size, avgDeg, avgPr, internal: internal.get(tag), external: external.get(tag) });
+  });
+
+  return { order, members, name, stats };
 }
 
 function highlightCommunity(tag) {
@@ -257,13 +299,79 @@ function highlightCommunity(tag) {
 
 function restoreView() {
   // back to whatever was showing before the legend hover — a selected
-  // node's highlight, or the neutral (nothing dim/hl) state
+  // node's highlight, a selected community's highlight, or the neutral
+  // (nothing dim/hl) state
   if (selectedId) {
     selectNode(selectedId, false);
+  } else if (selectedCommunityTag) {
+    highlightCommunity(selectedCommunityTag);
   } else {
     nodeLayer.selectAll("circle").classed("dim", false).classed("hl", false);
     edgeLayer.selectAll("line").classed("dim", false).classed("hl", false);
   }
+}
+
+function selectCommunity(tag, recenter) {
+  selectedId = null;
+  selectedCommunityTag = tag;
+  highlightCommunity(tag);
+  renderCommunityStats(tag);
+  if (recenter) fitToCommunity(tag);
+}
+
+function fitToCommunity(tag) {
+  const list = COMMUNITY.members.get(tag);
+  if (!list || !list.length) return;
+  const xs = list.map(n => svgX(n.x)), ys = list.map(n => svgY(n.y));
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+  const span = Math.max(maxX - minX, maxY - minY, 300);
+  const scale = Math.max(0.6, Math.min(2.6, 1500 / span));
+  svg.transition().duration(600)
+    .call(zoom.transform, d3.zoomIdentity.translate(-cx * scale, -cy * scale).scale(scale));
+}
+
+function renderCommunityStats(tag) {
+  const list = COMMUNITY.members.get(tag);
+  const st = COMMUNITY.stats.get(tag);
+  const name = COMMUNITY.name.get(tag) || tag;
+  const color = PALETTE[tag] || "#fff";
+  const touching = st.internal + st.external;
+  const cohesion = touching ? Math.round((st.internal / touching) * 100) : 0;
+
+  const noteRow = tag === "isolate"
+    ? "Not linked to any other character on the site — every member has 0 in- and out-degree."
+    : tag === "morituri"
+      ? "A fully self-contained island: linked to each other, cut off from the other 294 characters."
+      : "Part of the giant component (277 characters, 91% of the cast).";
+
+  const shown = list.slice(0, 14);
+  const more = list.length - shown.length;
+
+  document.getElementById("statsPanel").innerHTML = `
+    <div class="stats-head">
+      <h3 style="color:${color}">${name}</h3>
+      <span style="font-size:.85rem;color:var(--text-dim)">community · ${st.size} characters</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-cell"><span class="stat-num">${st.size}</span><span class="stat-lbl">characters</span></div>
+      <div class="stat-cell"><span class="stat-num">${st.avgDeg.toFixed(1)}</span><span class="stat-lbl">avg degree</span></div>
+      <div class="stat-cell"><span class="stat-num">${st.avgPr.toFixed(4)}</span><span class="stat-lbl">avg PageRank</span></div>
+      <div class="stat-cell"><span class="stat-num">${st.internal}</span><span class="stat-lbl">links within group</span></div>
+      <div class="stat-cell"><span class="stat-num">${st.external}</span><span class="stat-lbl">links to other groups</span></div>
+      <div class="stat-cell"><span class="stat-num">${cohesion}%</span><span class="stat-lbl">edges kept internal</span></div>
+    </div>
+    <p class="stats-community">${noteRow}</p>
+    <p class="stats-neighbors-label">Top members by degree (${list.length}):</p>
+    <div class="chip-row">
+      ${shown.map(n => `<span class="chip" data-id="${n.id}">${n.name.replace(" (character)", "")}</span>`).join("")}
+      ${more > 0 ? `<span class="chip chip-more">+${more} more</span>` : ""}
+    </div>
+  `;
+  document.querySelectorAll(".chip[data-id]").forEach(el => {
+    el.addEventListener("click", () => selectNode(el.dataset.id, true));
+  });
 }
 
 // ---------- search ----------
@@ -273,16 +381,38 @@ const suggestions = document.getElementById("suggestions");
 searchBox.addEventListener("input", () => {
   const q = searchBox.value.trim().toLowerCase();
   if (!q || !DATA) { suggestions.hidden = true; return; }
-  const matches = DATA.nodes
+
+  const commMatches = COMMUNITY.order
+    .filter(tag => (COMMUNITY.name.get(tag) || "").toLowerCase().includes(q))
+    .slice(0, 4);
+  const charMatches = DATA.nodes
     .filter(n => n.name.toLowerCase().includes(q))
     .sort((a, b) => b.deg - a.deg)
     .slice(0, 8);
-  if (!matches.length) { suggestions.hidden = true; return; }
-  suggestions.innerHTML = matches.map(n =>
+
+  if (!commMatches.length && !charMatches.length) { suggestions.hidden = true; return; }
+
+  const commHtml = commMatches.map(tag => {
+    const st = COMMUNITY.stats.get(tag);
+    return `<div class="suggestion-item suggestion-community" data-tag="${tag}">` +
+      `<span><span class="legend-dot" style="background:${PALETTE[tag]};margin-right:8px;vertical-align:middle;"></span>${COMMUNITY.name.get(tag)}</span>` +
+      `<span class="sugg-deg">${st.size} characters</span></div>`;
+  }).join("");
+  const charHtml = charMatches.map(n =>
     `<div class="suggestion-item" data-id="${n.id}">${n.name} <span class="sugg-deg">deg ${n.deg}</span></div>`
   ).join("");
+
+  suggestions.innerHTML = commHtml + charHtml;
   suggestions.hidden = false;
-  suggestions.querySelectorAll(".suggestion-item").forEach(el => {
+
+  suggestions.querySelectorAll(".suggestion-community").forEach(el => {
+    el.addEventListener("click", () => {
+      selectCommunity(el.dataset.tag, true);
+      searchBox.value = COMMUNITY.name.get(el.dataset.tag);
+      suggestions.hidden = true;
+    });
+  });
+  suggestions.querySelectorAll(".suggestion-item:not(.suggestion-community)").forEach(el => {
     el.addEventListener("click", () => {
       selectNode(el.dataset.id, true);
       searchBox.value = nodeById.get(el.dataset.id).name;
