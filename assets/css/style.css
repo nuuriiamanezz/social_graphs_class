@@ -282,6 +282,32 @@ table.stat-table td.num{ color:var(--cyan); font-variant-numeric: tabular-nums; 
   nav.site-nav a{ margin-left:0; margin-right:16px; }
 }
 
+/* ---------- home: explore CTA ---------- */
+.explore-cta{
+  display:flex; align-items:center; justify-content:space-between; gap:26px; flex-wrap:wrap;
+}
+.explore-cta-text{ flex:1 1 380px; }
+.explore-cta-text p{ margin:8px 0 0; color:var(--text-dim); }
+.explore-cta-text strong{ color:var(--text); }
+.explore-cta-btn{
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; gap:8px;
+  background:linear-gradient(135deg, var(--hotpink), var(--magenta));
+  color:var(--text);
+  font-family:'Poppins', sans-serif; font-weight:700; font-size:.95rem;
+  padding:13px 24px;
+  border-radius:999px;
+  box-shadow:var(--shadow-pink);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.explore-cta-btn:hover{ transform:translateY(-2px); box-shadow:0 0 30px rgba(255,46,156,.5); text-decoration:none; }
+.explore-cta-btn .arrow{ transition:transform .15s ease; }
+.explore-cta-btn:hover .arrow{ transform:translateX(3px); }
+@media (max-width:600px){
+  .explore-cta{ flex-direction:column; align-items:stretch; text-align:center; }
+  .explore-cta-btn{ justify-content:center; }
+}
+
 /* ---------- explore page ---------- */
 .explore-search-row{ display:flex; gap:10px; flex-wrap:wrap; }
 #searchBox{
