@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 2 — Coin flips don't make Spider-Man | WebCrawl</title>
+<meta name="description" content="Week 2, part 1: building an Erdős–Rényi random-graph baseline matched to the Marvel hyperlink network — degree distributions, the giant-component phase transition, and what a coin-flip model can't reproduce.">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Week 2 — Coin flips don't make Spider-Man | WebCrawl">
+<meta property="og:description" content="Building an Erdős–Rényi random-graph baseline matched to the Marvel hyperlink network: degree distributions, the giant-component phase transition, and what a coin-flip model can't reproduce.">
+<meta property="og:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_giant_component_transition.png">
+<meta property="og:url" content="https://nuuriiamanezz.github.io/social_graphs_class/posts/week2.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Week 2 — Coin flips don't make Spider-Man | WebCrawl">
+<meta name="twitter:description" content="Building an Erdős–Rényi random-graph baseline matched to the Marvel hyperlink network: degree distributions, the giant-component phase transition, and what a coin-flip model can't reproduce.">
+<meta name="twitter:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_giant_component_transition.png">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">WebCrawl</span>
+      <span class="tag">02805 Social Graphs &amp; Interactions · DTU</span>
+    </div>
+    <nav class="site-nav">
+      <a href="../index.html">Home</a>
+      <a href="week2.html">Latest post</a>
+      <a href="../explore.html">Explore</a>
+      <a href="https://sunelehmann.com/socialgraphs2026-web/data/">Course data</a>
+      <a href="https://github.com/nuuriiamanezz/social_graphs_class">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="post-header">
+    <span class="week-badge">Week 2 — Random graphs edition</span>
+    <h1>Coin flips don't make Spider-Man: building the random-graph baseline</h1>
+    <p class="post-meta">Erdős–Rényi random graphs, matched to the same 303-character Marvel hyperlink network as week 1</p>
+    <p class="post-meta" style="color:var(--cyan);">In progress — Part 2 (random graphs) is up; clustering, small worlds, preferential attachment &amp; null models land here next</p>
+  </div>
+
+  <article>
+
+    <h2>What we asked</h2>
+    <p>
+      Week 1 gave us a network: 303 characters, 1,434 undirected links, ⟨k⟩ ≈ 9.5, one
+      giant component holding 91.4% of it together. This week's question is how much of
+      that story is actually surprising. If all you know about a network is its size and
+      its average degree, and you fill in every other connection by <em>coin flip</em>,
+      how much of Marvel do you get back for free? Where does "one giant component"
+      even come from mathematically, and does the textbook ⟨k⟩ = 1 phase transition
+      actually show up if you simulate it rather than just derive it?
+    </p>
+
+    <h2>What we did</h2>
+    <p>
+      We built Erdős–Rényi graphs <em>G(n, p)</em> at a few scales. First, two 5,000-node
+      graphs — one tuned to ⟨k⟩ = 10, one to ⟨k⟩ = 100 — to check that the degree
+      distribution really does collapse onto a Poisson (small ⟨k⟩) or Normal (large ⟨k⟩)
+      curve, and that the observed maximum degree matches what extreme-value theory
+      predicts. Then we swept ⟨k⟩ from 0.2 to 4 across 1,000-node graphs, 20 repeats per
+      value, to trace out the giant-component phase transition against its closed-form
+      prediction <em>S = 1&nbsp;&minus;&nbsp;e<sup>&minus;cS</sup></em>. Finally we generated
+      a single network right at the edge of that transition (n = 200, ⟨k⟩ = 1.5) and pulled
+      its giant component out to look at directly.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_er_degree_dist.png" alt="Two histograms of degree distributions for Erdos-Renyi random graphs with 5000 nodes: left panel at average degree 10 in hotpink with a Poisson overlay, right panel at average degree 100 in cyan with a Normal overlay, both showing a tight bump around the mean with a dashed yellow theoretical curve.">
+      <figcaption>
+        5,000-node ER graphs at ⟨k⟩=10 (left) and ⟨k⟩=100 (right). Both collapse onto their
+        theoretical curve almost exactly — a tight bump around the mean, no long tail, and
+        the observed maximum degree lands within a few units of theory in each case.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <img src="../assets/img/fig_giant_component_transition.png" alt="Scatter plot with error bars showing the giant component fraction as a function of average degree, rising sharply from near zero to near one around average degree 1, overlaid with a dashed yellow theoretical curve and a cyan dashed vertical line marking the predicted transition at average degree 1.">
+      <figcaption>
+        1,000-node ER graphs, 20 repeats per ⟨k⟩. Below ⟨k⟩ = 1 the giant component stays
+        near zero; above it, it takes off — and the simulated points sit almost exactly on
+        the theoretical curve the whole way.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <img src="../assets/img/fig_near_transition_viz.png" alt="Network diagram of a 200-node random graph at average degree 1.5, drawn near the phase transition. The giant component of 109 nodes is highlighted with a cyan-to-magenta-to-hotpink color gradient showing distance from a seed node, while the remaining nodes scattered outside it are shown as small dim grey dots.">
+      <figcaption>
+        n = 200, ⟨k⟩ = 1.5 — right at the transition. The giant component (109 of 200
+        nodes, colored cyan → magenta → hotpink by distance from a seed node) is barely
+        past critical; the other 58 components are the small grey dots pushed to the
+        margins.
+      </figcaption>
+    </figure>
+
+    <h2>The number that mattered most</h2>
+    <p>
+      Plug Marvel's own n = 303 and ⟨k⟩ = 9.47 into the isolation-probability formula
+      <em>(1&minus;p)<sup>n&minus;1</sup></em> and a coin-flip network predicts about
+      <strong>0.02 isolated characters</strong> &mdash; essentially none. The real network
+      has <strong>17</strong>. That's not a rounding error, it's off by nearly three orders
+      of magnitude, and it's exactly the number the course's own material flags for this
+      comparison. Isolation in this network isn't sampling noise from a moderately
+      connected random graph &mdash; it's a real editorial fact about which Wikipedia
+      articles happened to get cross-linked.
+    </p>
+
+    <table class="stat-table">
+      <thead>
+        <tr><th>Network</th><th class="num">n</th><th class="num">m</th><th class="num">giant %</th><th class="num">isolates</th><th class="num">max degree</th><th class="num">⟨d⟩ (giant)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Marvel (real)</td><td class="num">303</td><td class="num">1,434</td><td class="num">91.4%</td><td class="num">17</td><td class="num">106</td><td class="num">2.674</td></tr>
+        <tr><td>Random G(n,m) matched</td><td class="num">303</td><td class="num">1,434</td><td class="num">100.0%</td><td class="num">0</td><td class="num">21</td><td class="num">2.771</td></tr>
+      </tbody>
+    </table>
+
+    <h2>What surprised us</h2>
+    <p>
+      A random graph built with Marvel's exact node count and edge count doesn't just
+      have fewer isolates &mdash; it has <strong>zero</strong>. Spread the same 1,434 links
+      around by chance and every one of the 303 characters ends up reachable from every
+      other one, in a single component, with an average distance (2.771) barely different
+      from the real network's (2.674). But the maximum degree tells the real story: the
+      random version tops out at 21, while the real network has Spider-Man sitting at 106.
+      A coin-flip model's degrees cluster tightly around the mean by construction &mdash;
+      it structurally <em>cannot</em> produce a hub, no matter how many times you re-roll
+      it. Whatever is making Spider-Man Spider-Man, it isn't randomness.
+    </p>
+
+    <div class="callout">
+      Coming next in this same slot: clustering coefficients by hand and on the real
+      network (2.3), Watts&ndash;Strogatz small worlds (2.4), preferential attachment and
+      power laws (2.5&ndash;2.7), proper null models via configuration-model shuffles
+      (2.8), and the friendship paradox (2.9) &mdash; same Marvel network, same random
+      baseline, more tools pointed at both.
+    </div>
+
+  </article>
+
+  <a class="back-link" href="../index.html">&larr; Back to all posts</a>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="group-credit">Nuria Máñez Molina (s234523) · Nour Marak (s234700) · Marah Osama Marak (s182946)</span>
+    <span>02805 Social Graphs &amp; Interactions, DTU — Week 2</span>
+  </div>
+</footer>
+
+</body>
+</html>
