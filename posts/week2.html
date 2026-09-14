@@ -42,7 +42,7 @@
     <span class="week-badge">Week 2 — Random graphs edition</span>
     <h1>Coin flips don't make Spider-Man: building the random-graph baseline</h1>
     <p class="post-meta">Erdős–Rényi random graphs, matched to the same 303-character Marvel hyperlink network as week 1</p>
-    <p class="post-meta" style="color:var(--cyan);">In progress — Part 2 (random graphs) is up; clustering, small worlds, preferential attachment &amp; null models land here next</p>
+    <p class="post-meta" style="color:var(--cyan);">Part 1 of the models series — random graphs and the friendship paradox; clustering, small worlds, preferential attachment &amp; null models land in the next post</p>
   </div>
 
   <article>
@@ -134,12 +134,41 @@
       it. Whatever is making Spider-Man Spider-Man, it isn't randomness.
     </p>
 
+    <h2>Bonus: the friendship paradox</h2>
+    <p>
+      One more coin-flip-adjacent question while we had the network loaded: is it true
+      that, on average, your friends have more friends than you do? Across every
+      non-isolated character, the average degree is <strong>10.0</strong>, but the
+      average of each character's <em>neighbors'</em> degree is <strong>24.2</strong>
+      &mdash; more than double. <strong>87.4%</strong> of characters have neighbors who
+      are, on average, better connected than they are.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_friendship_paradox.png" alt="Left panel: bar chart comparing average degree (10.0) to average neighbor degree (24.2). Right panel: scatter plot of each character's degree against their neighbors' average degree, with most points sitting above the y=x parity line, showing 87.4% of characters have more-popular neighbors.">
+      <figcaption>
+        Left: the headline gap. Right: each character's own degree vs. their neighbors'
+        average degree &mdash; the cyan dashed line is where the two would be equal.
+        Almost everyone sits above it.
+      </figcaption>
+    </figure>
+
+    <p>
+      It's not a personal failing, it's arithmetic. Spider-Man (degree 106) is
+      <em>someone's</em> neighbor 106 times over &mdash; once for every character
+      connected to him &mdash; so he inflates the neighbor-average for everyone he
+      touches, while only ever counting once in the plain degree average. Hulk (65),
+      Wolverine (63), Doctor Strange (57) and Deadpool (41) do the same on a smaller
+      scale. The paradox is really just the heavy tail from week 1, seen from a
+      different angle: a few hubs get counted over and over as someone else's
+      connection, dragging the "average friend" up far past the average node.
+    </p>
+
     <div class="callout">
-      Coming next in this same slot: clustering coefficients by hand and on the real
+      Coming next in the models series: clustering coefficients by hand and on the real
       network (2.3), Watts&ndash;Strogatz small worlds (2.4), preferential attachment and
-      power laws (2.5&ndash;2.7), proper null models via configuration-model shuffles
-      (2.8), and the friendship paradox (2.9) &mdash; same Marvel network, same random
-      baseline, more tools pointed at both.
+      power laws (2.5&ndash;2.7), and proper null models via configuration-model shuffles
+      (2.8) &mdash; same Marvel network, same random baseline, more tools pointed at both.
     </div>
 
   </article>
