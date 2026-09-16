@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 3 — Three degrees of Spider-Man | WebCrawl</title>
+<meta name="description" content="Week 3: paths, centrality with a degree-preserving null-model check, mixing patterns, and cliques on the Marvel hyperlink network — Spider-Man's 3-hop reach, a two-link broker that outranks its own degree, and teams that overwhelmingly stick to their own kind.">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Week 3 — Three degrees of Spider-Man | WebCrawl">
+<meta property="og:description" content="Paths, centrality (with a null-model gut-check), mixing patterns, and cliques on the Marvel hyperlink network — same 303 characters, four new tools.">
+<meta property="og:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_mixing_homophily.png">
+<meta property="og:url" content="https://nuuriiamanezz.github.io/social_graphs_class/posts/week3.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Week 3 — Three degrees of Spider-Man | WebCrawl">
+<meta name="twitter:description" content="Paths, centrality (with a null-model gut-check), mixing patterns, and cliques on the Marvel hyperlink network — same 303 characters, four new tools.">
+<meta name="twitter:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_mixing_homophily.png">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">WebCrawl</span>
+      <span class="tag">02805 Social Graphs &amp; Interactions · DTU</span>
+    </div>
+    <nav class="site-nav">
+      <a href="../index.html">Home</a>
+      <a href="week3.html">Latest post</a>
+      <a href="../explore.html">Explore</a>
+      <a href="https://sunelehmann.com/socialgraphs2026-web/data/">Course data</a>
+      <a href="https://github.com/nuuriiamanezz/social_graphs_class">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="post-header">
+    <span class="week-badge">Week 3 — Go nuts with your LLM 🚀</span>
+    <h1>Three degrees of Spider-Man: brokers, bridges, and team loyalty in the Marvel web</h1>
+    <p class="post-meta">Paths, centrality (checked against a degree-preserving null model), mixing patterns, and cliques — all four of this week's tools, same 303-character network</p>
+  </div>
+
+  <article>
+
+    <h2>What we asked</h2>
+    <p>
+      This week's toolbox is about <em>position</em>, not just size: how far apart is
+      everyone really, who sits in structurally important spots regardless of how many
+      links they have, do characters actually cluster with their own in-universe teams,
+      and are there tight little cliques hiding in here at all? We picked one question
+      per tool and ran all four against the same Marvel hyperlink network from weeks 1
+      and 2: 303 characters, 1,434 undirected links, 277 of them in one giant component.
+    </p>
+
+    <h2>Tool 1 — Paths: how many hops from Spider-Man?</h2>
+    <p>
+      "Six degrees of separation" is the famous number, so we built a small tool that
+      takes any character and reports the hop-count to everyone else, then pointed it
+      at the network's biggest hub. The answer wasn't six. From Spider-Man, every other
+      character in the giant component is reachable in <strong>at most 3 hops</strong>:
+      106 are direct links, 152 sit two hops away, and only 18 obscure characters
+      (Kid Colt, Mahr Vehl, Skull the Slayer, and 15 others) are a full three hops out.
+      Spider-Man's eccentricity of 3 also happens to be the graph's <em>radius</em> —
+      he's the single node with the smallest possible worst-case distance to everyone
+      else, i.e. the network's actual geometric center, not just its biggest hub.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_six_degrees.png" alt="Bar chart of shortest-path distance from Spider-Man to every other character in the giant component: 106 characters at distance 1, 152 at distance 2, and 18 at distance 3, with none farther away.">
+      <figcaption>
+        Every one of the 276 other characters in Spider-Man's component is within 3 hops
+        of him. No one needs six degrees to reach the network's biggest hub.
+      </figcaption>
+    </figure>
+
+    <p>
+      The six-hop number does exist &mdash; it's just not measured <em>from</em> Spider-Man.
+      The giant component's diameter (the longest shortest path between any two
+      characters) is <strong>6</strong>, achieved between five obscure periphery
+      characters &mdash; Mahr Vehl, Mark Hazzard: Merc, Redneck, Starr the Slayer, and
+      The Witness &mdash; sitting on the far edge from each other. Average distance
+      across the whole component is a much tighter 2.674 hops. So "six degrees" is real,
+      but it's the network's worst case between two nobodies, not the typical distance
+      to its most famous node.
+    </p>
+
+    <h2>Tool 2 — Centrality: a two-link character that outranks its own degree</h2>
+    <p>
+      Degree tells you how connected a character <em>looks</em>; closeness centrality
+      tells you how connected it <em>is</em>, positionally. We computed harmonic
+      closeness centrality (it handles our 19 disconnected components gracefully,
+      unlike plain closeness) for all 303 characters and compared the ranking to plain
+      degree rank. The biggest gap in the whole network belongs to
+      <strong>Scorpio (Marvel Comics)</strong>: degree 2, ranked a lowly 243rd out of
+      303 by connection count &mdash; but 129th by harmonic closeness, jumping over 100
+      places. The reason is entirely about <em>who</em> those two links go to: Scorpio's
+      only neighbors are Spider-Man (degree 106) and Wolverine (degree 63), the
+      network's two biggest hubs, from two entirely different in-universe teams.
+      Two links, chosen well, buy more reach than two dozen chosen badly.
+    </p>
+
+    <p>
+      To check this wasn't just "any degree-2 node would do this by luck," we ran a
+      degree-preserving null model: 200 random rewirings of the network (double-edge
+      swaps) that keep every character's degree fixed but scramble who connects to
+      whom, then recomputed Scorpio's closeness rank each time. Under random rewiring,
+      Scorpio's expected rank is 238th (±36) &mdash; barely better than its degree rank.
+      The real rank of 129th sits about <strong>3 standard deviations</strong> above that
+      null distribution (z ≈ &minus;3.0, since lower rank numbers mean more central).
+      This isn't an artifact of having degree 2 in a graph like this one &mdash; it's a
+      genuine structural fact about which two hubs Scorpio happens to bridge.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_centrality_null.png" alt="Histogram of Scorpio's harmonic-closeness rank across 200 degree-preserving random rewirings, clustered between rank 140 and 290 with a mean far from the real network's rank of 129, marked with a dashed pink line, and the plain degree rank of 243 marked with a dotted cyan line.">
+      <figcaption>
+        Scorpio's real closeness rank (pink dashed line, #129) sits well outside the
+        distribution you'd expect from 200 random rewirings that preserve every
+        character's degree (grey) &mdash; its two specific neighbors matter, not just
+        the count.
+      </figcaption>
+    </figure>
+
+    <h2>Tool 3 — Mixing: do teams actually link to their own teams?</h2>
+    <p>
+      Marvel characters come pre-labeled with an in-universe team via the community
+      structure from week 1 (X-Men, Spider-Verse, Cosmic Avengers, and six more). Degree
+      assortativity across the whole network is <strong>&minus;0.098</strong> &mdash; a
+      mild disassortative tilt, the usual hub-and-spoke shape of wiki hyperlink networks,
+      where big hub pages accumulate links from many small pages rather than mostly
+      linking to each other. But the more interesting mixing question is attribute
+      homophily: do same-team characters link to each other more than chance would
+      predict? <strong>53.6%</strong> of all edges connect two characters from the same
+      team. We shuffled the team labels across nodes 1,000 times (keeping the network
+      itself fixed) to see what same-team linkage looks like with no real team
+      structure at all: the null average is <strong>11.7%</strong> (±1.0%). The real
+      network's homophily is roughly <strong>43 standard deviations</strong> above that
+      &mdash; not a subtle effect.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_mixing_homophily.png" alt="Histogram of the same-community edge fraction across 1000 label-shuffled versions of the network, tightly clustered around 0.12, with the real network's observed fraction of 0.536 marked far to the right with a dashed pink line.">
+      <figcaption>
+        1,000 shuffles of which team-label goes on which character, network topology
+        held fixed. None of them get anywhere near the real network's 53.6% same-team
+        edge rate &mdash; team affiliation predicts links far beyond chance.
+      </figcaption>
+    </figure>
+
+    <h2>Tool 4 — Cliques: fully-connected team reunions</h2>
+    <p>
+      A maximal clique is a set of characters who <em>all</em> link to each other
+      directly &mdash; no missing edges anywhere inside the group. The network has 917
+      maximal cliques ranging from lone isolates up to a clique number of
+      <strong>8</strong>. Every single one of the six largest (8-character) cliques is
+      100% X-Men &mdash; overlapping combinations of Wolverine, Cyclops, Jean Grey,
+      Betsy Braddock, Rachel Summers, Northstar, Emma Frost, Jubilee, Cable, Storm and
+      Phoenix, all mutually linked. Across all 404 cliques of size 4 or larger, 50.2% of
+      the character pairs inside them share a team label, against a shuffled-label null
+      of 11.6% (±2.1%) &mdash; a z-score of roughly 18. Cliques aren't just densely
+      connected; structurally, they're almost entirely team reunions.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_clique_homophily.png" alt="Histogram of the fraction of same-community character pairs inside cliques of size four or larger, across 1000 label shuffles, clustered around 0.12, with the real network's observed fraction of 0.502 marked far to the right with a dashed pink line.">
+      <figcaption>
+        Same test as the mixing chart, but restricted to pairs inside cliques of size
+        ≥4. The gap is even starker at this fully-connected, local scale.
+      </figcaption>
+    </figure>
+
+    <table class="stat-table">
+      <thead>
+        <tr><th>Finding</th><th class="num">Observed</th><th class="num">Null mean</th><th class="num">z-score</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Scorpio's closeness rank (lower = more central)</td><td class="num">129</td><td class="num">238 (±36)</td><td class="num">&minus;3.0</td></tr>
+        <tr><td>Same-team edge fraction (mixing)</td><td class="num">53.6%</td><td class="num">11.7% (±1.0%)</td><td class="num">43.0</td></tr>
+        <tr><td>Same-team pair fraction inside cliques ≥4</td><td class="num">50.2%</td><td class="num">11.6% (±2.1%)</td><td class="num">18.3</td></tr>
+      </tbody>
+    </table>
+
+    <h2>What surprised us</h2>
+    <p>
+      The four tools kept telling the same story from different angles. Paths and
+      centrality both point at <em>position</em> mattering more than raw connection
+      count &mdash; Spider-Man is the geometric center as well as the biggest hub, and
+      Scorpio proves two well-placed links beat two dozen random ones. Mixing and
+      cliques both point at <em>team loyalty</em> being an enormous, non-negotiable
+      organizing force in how this network was actually built &mdash; not a mild
+      correlation but a z-score in the double-to-triple digits. None of this was
+      visible from degree distributions alone; it took walking distances, a null-model
+      rewiring, two label-shuffle tests, and a clique enumeration to see it.
+    </p>
+
+    <div class="callout">
+      Next up in the course: assortativity's cousin tools and whatever week 4 hands
+      us &mdash; same Marvel network, same frozen snapshot, next set of questions.
+    </div>
+
+  </article>
+
+  <a class="back-link" href="../index.html">&larr; Back to all posts</a>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="group-credit">Nuria Máñez Molina (s234523) · Nour Marak (s234700) · Marah Osama Marak (s182946)</span>
+    <span>02805 Social Graphs &amp; Interactions, DTU — Week 3</span>
+  </div>
+</footer>
+
+</body>
+</html>
