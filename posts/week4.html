@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 4 — Nine schools of thought and one stubborn edge | WebCrawl</title>
+<meta name="description" content="Week 4: we swapped Marvel for 1,444 Wikipedia philosophers and ran the whole toolbox at once — weighted vs. unweighted Louvain, Louvain vs. Infomap, and a from-scratch disparity-filter backbone that thins out instead of shattering.">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Week 4 — Nine schools of thought and one stubborn edge | WebCrawl">
+<meta property="og:description" content="Weighted vs. unweighted Louvain, Louvain vs. Infomap, and a from-scratch disparity-filter backbone on 1,444 Wikipedia philosophers.">
+<meta property="og:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_backbone_network_alpha02.png">
+<meta property="og:url" content="https://nuuriiamanezz.github.io/social_graphs_class/posts/week4.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Week 4 — Nine schools of thought and one stubborn edge | WebCrawl">
+<meta name="twitter:description" content="Weighted vs. unweighted Louvain, Louvain vs. Infomap, and a from-scratch disparity-filter backbone on 1,444 Wikipedia philosophers.">
+<meta name="twitter:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_backbone_network_alpha02.png">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">WebCrawl</span>
+      <span class="tag">02805 Social Graphs &amp; Interactions · DTU</span>
+    </div>
+    <nav class="site-nav">
+      <a href="../index.html">Home</a>
+      <a href="week4.html">Latest post</a>
+      <a href="../explore.html">Explore</a>
+      <a href="https://sunelehmann.com/socialgraphs2026-web/data/">Course data</a>
+      <a href="https://github.com/nuuriiamanezz/social_graphs_class">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="post-header">
+    <span class="week-badge">Week 4 — Go nuts with your LLM 🚀</span>
+    <h1>Nine schools of thought and one stubborn edge: communities and backbones in 1,444 philosophers</h1>
+    <p class="post-meta">Weighted vs. unweighted Louvain, Louvain vs. Infomap, and a from-scratch disparity-filter backbone — all three "go nuts" openers, one brand-new network</p>
+  </div>
+
+  <article>
+
+    <h2>What we asked</h2>
+    <p>
+      This week we finally got to pick our own network, so we retired the Marvel
+      hyperlink graph (RIP, three good weeks) for the course's <strong>philosophers
+      dataset</strong>: 1,444 philosophers and philosophical traditions from
+      Wikipedia, connected by 11,135 directed, weighted hyperlink edges. We
+      symmetrized the weights into a single undirected graph and kept its giant
+      component &mdash; <strong>1,374 philosophers, 9,139 weighted edges, total
+      edge weight 15,758</strong> &mdash; as the network for everything below. With
+      a fresh network and free rein, we chased all three of this week's "go nuts"
+      openers at once: does <em>weighting</em> edges change who ends up in whose
+      school, does a completely different community-detection philosophy
+      (Infomap) agree with modularity-based Louvain, and does the network have a
+      real backbone, or does it just fall apart once you start trimming weak
+      links?
+    </p>
+
+    <h2>Tool 1 — Weighted vs. unweighted: does counting matter?</h2>
+    <p>
+      We ran Louvain community detection twice on the same 1,374 philosophers
+      &mdash; once respecting edge weight (how often two philosophers'
+      Wikipedia pages actually link to each other) and once pretending every
+      link counts the same &mdash; five random seeds each, to make sure we
+      weren't reading noise into a single run. Weighted Louvain settled on
+      <strong>7&ndash;9 communities</strong> with modularity
+      <strong>Q ≈ 0.555</strong> (range 0.546&ndash;0.564); unweighted Louvain
+      settled on <strong>9&ndash;10 communities</strong> with a noticeably lower
+      <strong>Q ≈ 0.505</strong>. Counting actually helps the partition, which
+      makes sense &mdash; two philosophers linked once in passing and two linked
+      from a dozen different angles shouldn't count the same.
+    </p>
+
+    <p>
+      More interesting than the modularity gap is how much the <em>membership</em>
+      changes: agreement between the weighted and unweighted partitions is only
+      <strong>NMI = 0.637</strong>, and <strong>348 of 1,374 philosophers
+      (25.3%)</strong> land in a different community than their weighted "home"
+      community would predict. These movers skew slightly peripheral (mean
+      degree 11.8 vs. 13.8 for non-movers), but a few genuinely famous names
+      switch schools depending on whether you count. <strong>René Descartes</strong>
+      and Leibniz drift out of the Kant/Hegel/Nietzsche "German rationalism"
+      cluster and into the Locke/Hume/Newton "British empiricism" cluster once
+      weights are ignored; <strong>Karl Marx</strong> drifts from his own
+      Marx/Tolstoy/Lenin/Engels cluster toward that same empiricism cluster; and
+      <strong>Thomas Hobbes</strong> moves too. Unweighted Louvain, in other
+      words, is more easily swayed by a handful of incidental links than by the
+      dense back-and-forth citation pattern that actually defines a school of
+      thought.
+    </p>
+
+    <h2>Tool 2 — Louvain vs. Infomap: one philosopher's community is another algorithm's nine</h2>
+    <p>
+      Louvain optimizes modularity and gives you broad "schools"; Infomap
+      optimizes the map equation and tends to find much finer flow structure.
+      Run on the same weighted network, Infomap found <strong>70 modules</strong>
+      against weighted Louvain's 9 &mdash; roughly eight Infomap modules for
+      every one Louvain community, on average. Agreement is moderate either way
+      (NMI = 0.630 against weighted Louvain, 0.602 against unweighted), which
+      tells you the two algorithms aren't contradicting each other so much as
+      answering different questions at different resolutions.
+    </p>
+
+    <p>
+      What's genuinely interesting is that the fragmentation isn't even. Some of
+      Louvain's big schools hold together under Infomap's finer lens; others
+      shatter. The Aristotle/Plato/Socrates cluster (n=298) splinters into 19
+      Infomap modules with only 64.8% staying together in the largest one, and
+      the Kant/Hegel/Descartes/Nietzsche/Leibniz cluster (n=249) does almost the
+      same &mdash; 19 modules, 58.6% retained. The Locke/Hume/Newton/Rousseau/
+      Voltaire empiricists (n=201) fragment hardest of all: 16 modules, and only
+      25.9% of the community stays in Infomap's largest piece for it. But the
+      <strong>Confucius/Zhu Xi/Mao Zedong/Laozi/Mencius</strong> cluster (n=75)
+      is the outlier in the other direction &mdash; Infomap only cracks it into
+      <strong>3 modules</strong>, with <strong>81.3%</strong> of it staying in a
+      single module. By Infomap's much stricter standard, Chinese philosophy is
+      the one Louvain community in this dataset that's actually cohesive rather
+      than a modularity-convenient bundle of smaller, more flow-isolated
+      sub-traditions.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_louvain_infomap_split.png" alt="Dual-axis bar and line chart across weighted Louvain's nine philosophy communities: bars show the number of Infomap modules each splits into (ranging from 3 for the Confucius/Zhu Xi/Laozi cluster up to 19 for the Aristotle and Kant clusters), and a line shows the percentage of each community that stays in its single largest Infomap module, lowest for the Locke/Hume/Newton empiricists at 25.9% and highest for the Confucius cluster at 81.3%.">
+      <figcaption>
+        Louvain's nine broad schools, reseen through Infomap's finer lens. Most
+        schools fragment into 15&ndash;19 flow modules; Confucius's cluster is
+        the one that barely fragments at all.
+      </figcaption>
+    </figure>
+
+    <h2>Tool 3 — Backbone: does the network shatter, or just thin out?</h2>
+    <p>
+      We implemented the disparity filter (Serrano, Boguna &amp; Vespignani,
+      2009) from scratch: for every edge, keep it only if it's statistically
+      significant relative to at least one of its endpoints' total edge weight,
+      at a chosen significance level α. Lower α means a stricter backbone with
+      only the edges that really matter to a given philosopher's overall
+      "weight budget" survive. We scanned α from 0.01 to 0.55 and tracked what
+      fraction of the network stays in one giant, connected piece.
+    </p>
+
+    <p>
+      The headline finding is that this backbone doesn't have a dramatic
+      breaking point &mdash; it thins out gradually. At the strictest threshold
+      we tried (α=0.05) only <strong>9.5%</strong> of philosophers are still
+      connected in the giant piece; loosen it to α=0.2 and that climbs to
+      <strong>63.4%</strong>; by α=0.5 it's <strong>96.4%</strong>, nearly the
+      whole network. There's no cliff, no single α where everything suddenly
+      falls apart or suddenly reconnects &mdash; the significance of a
+      philosopher's links to the rest of the network is spread out fairly
+      smoothly rather than concentrated at one critical threshold.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_backbone_alpha_curve.png" alt="Line chart of the giant component's fraction of the 1,374-node network as the disparity-filter significance threshold α increases from 0 to 0.55, rising smoothly from under 10% at α=0.05 through 63.4% at α=0.2 to 96.4% at α=0.5, with no sharp jump, and an annotation marking the single biggest individual edge merge at α≈0.047 between Augustine of Hippo and Nicolas Malebranche.">
+      <figcaption>
+        The giant component grows smoothly as α relaxes &mdash; no shattering,
+        no sudden phase transition. One single edge merge (annotated) does more
+        work than any other, but even that isn't a network-wide cliff.
+      </figcaption>
+    </figure>
+
+    <p>
+      That said, edges are not all equally important to keep. We tracked, edge
+      by edge in increasing-α order, which single addition merged the two
+      biggest existing clusters into the biggest jump anywhere in the whole
+      scan. That edge is <strong>Augustine of Hippo &ndash; Nicolas
+      Malebranche</strong> (edge weight 5, significant at α≈0.047): it merges a
+      75-philosopher cluster with a 47-philosopher cluster into one 122-strong
+      piece in a single stroke &mdash; a fittingly on-theme finding, since
+      Malebranche's whole philosophical project was explicitly built on
+      reworking Augustinian ideas through a Cartesian lens.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_backbone_network_alpha02.png" alt="Force-directed layout of the disparity-filter backbone at α=0.2, showing 871 of 1,374 philosophers connected in the giant piece, colored by weighted-Louvain community and sized by total edge weight (strength), with the ten highest-strength philosophers labeled including Aristotle, Plato, and Immanuel Kant.">
+      <figcaption>
+        The α=0.2 backbone's giant piece: 871 philosophers, 1,511 edges,
+        colored by weighted-Louvain community and sized by strength. Even at
+        this fairly strict threshold, all nine schools are still represented
+        and still mostly clustered together spatially.
+      </figcaption>
+    </figure>
+
+    <table class="stat-table">
+      <thead>
+        <tr><th>Finding</th><th class="num">Weighted</th><th class="num">Unweighted / other</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Louvain modularity (5 seeds)</td><td class="num">Q ≈ 0.555, 7&ndash;9 comms</td><td class="num">Q ≈ 0.505, 9&ndash;10 comms</td></tr>
+        <tr><td>NMI, weighted vs. unweighted Louvain</td><td class="num" colspan="2">0.637 (348 / 1,374 movers, 25.3%)</td></tr>
+        <tr><td>Infomap modules vs. weighted Louvain communities</td><td class="num">70 modules</td><td class="num">9 communities</td></tr>
+        <tr><td>NMI, Infomap vs. weighted / unweighted Louvain</td><td class="num">0.630</td><td class="num">0.602</td></tr>
+        <tr><td>Backbone giant-component fraction at α=0.05 / 0.2 / 0.5</td><td class="num" colspan="2">9.5% / 63.4% / 96.4%</td></tr>
+      </tbody>
+    </table>
+
+    <h2>What surprised us</h2>
+    <p>
+      All three tools converge on the same underlying idea: the strength of a
+      connection carries real information that a binary "linked or not" view
+      throws away, and it takes deliberately different methods to see how much.
+      Weighting edges properly reshuffles a quarter of the network's community
+      membership and pulls out famous, non-trivial swaps like Descartes and
+      Marx moving schools depending on whether repetition counts. Switching
+      from modularity to the map equation reveals that some "schools" (Aristotle's,
+      Kant's) are really loose federations of many smaller flow-communities,
+      while others (Confucius's) are genuinely, tightly cohesive at a much finer
+      resolution too. And the backbone doesn't have a single dramatic collapse
+      point at all &mdash; it thins gradually, with importance spread across the
+      network rather than resting on one bottleneck &mdash; except for one edge,
+      appropriately between two philosophers whose ideas were themselves directly
+      built on each other, which does more single-handed structural work than
+      any other connection in the graph.
+    </p>
+
+    <div class="callout">
+      Test 1 (weeks 1&ndash;4) is Wednesday &mdash; wish us luck. Next up:
+      whatever week 5 hands us, hopefully with our brains still intact.
+    </div>
+
+  </article>
+
+  <a class="back-link" href="../index.html">&larr; Back to all posts</a>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="group-credit">Nuria Máñez Molina (s234523) · Nour Marak (s234700) · Marah Osama Marak (s182946)</span>
+    <span>02805 Social Graphs &amp; Interactions, DTU — Week 4</span>
+  </div>
+</footer>
+
+</body>
+</html>
