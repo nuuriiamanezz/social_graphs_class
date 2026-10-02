@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 5 — Fame buys words, not vocabulary | WebCrawl</title>
+<meta name="description" content="Week 5: we joined the Marvel hyperlink network to the text of all 303 Wikipedia pages. In-degree predicts page length (Spearman 0.75), but once you account for Heaps' law, famous pages are no richer in vocabulary than obscure ones.">
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Week 5 — Fame buys words, not vocabulary | WebCrawl">
+<meta property="og:description" content="In-degree predicts page length across 303 Marvel Wikipedia pages, but one Heaps curve fits famous and obscure characters alike.">
+<meta property="og:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_fame_vs_words.png">
+<meta property="og:url" content="https://nuuriiamanezz.github.io/social_graphs_class/posts/week5.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Week 5 — Fame buys words, not vocabulary | WebCrawl">
+<meta name="twitter:description" content="In-degree predicts page length across 303 Marvel Wikipedia pages, but one Heaps curve fits famous and obscure characters alike.">
+<meta name="twitter:image" content="https://nuuriiamanezz.github.io/social_graphs_class/assets/img/fig_fame_vs_words.png">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo">WebCrawl</span>
+      <span class="tag">02805 Social Graphs &amp; Interactions · DTU</span>
+    </div>
+    <nav class="site-nav">
+      <a href="../index.html">Home</a>
+      <a href="week5.html">Latest post</a>
+      <a href="../explore.html">Explore</a>
+      <a href="https://sunelehmann.com/socialgraphs2026-web/data/">Course data</a>
+      <a href="https://github.com/nuuriiamanezz/social_graphs_class">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="post-header">
+    <span class="week-badge">Week 5 — Go nuts with your LLM 🚀</span>
+    <h1>Fame buys words, not vocabulary: what 106 incoming links do to a Wikipedia page</h1>
+    <p class="post-meta">The week 1 network meets the week 5 text: in-degree against page length, and a Heaps' law check on whether famous pages actually say more</p>
+  </div>
+
+  <article>
+
+    <h2>What we asked</h2>
+    <p>
+      Marvel is back. For four weeks we only looked at who links to whom; this
+      week the course handed us the <strong>full text of all 303 pages</strong>,
+      so we could finally ask the question that joins the two halves of the
+      course: <strong>does being famous in the network make your Wikipedia page
+      longer, and does it make its language any richer?</strong> "Famous" here
+      means in-degree in the week 1 hyperlink network, i.e. how many of the
+      other 302 character pages link to you. Spider-Man has 106; 58 characters
+      have none.
+    </p>
+
+    <h2>How we counted</h2>
+    <p>
+      One preprocessing recipe, stated up front because every number below
+      depends on it: lowercase the text, then take runs of letters and digits
+      as tokens, keeping internal hyphens and apostrophes together (so
+      <code>spider-man</code> and <code>didn't</code> are one token each). No
+      stopword removal, no lemmatization. A page's <em>length</em> is its
+      number of tokens and its <em>vocabulary</em> is its number of distinct
+      types. Under that recipe the whole corpus is <strong>725,307 tokens and
+      30,779 types</strong>, of which 12,284 are hapaxes; the median page has
+      1,234 tokens, the shortest (Helix) 194 and the longest (Scarlet Witch)
+      14,157.
+    </p>
+
+    <h2>Finding 1 — fame buys length</h2>
+    <p>
+      In-degree and page length rise together, strongly: <strong>Spearman
+      ρ = 0.75</strong> (bootstrap 95% interval 0.69&ndash;0.80). On log axes
+      the slope is about 0.72, so ten times the incoming links goes with
+      roughly five times the text. The medians make it concrete: characters
+      nobody links to have a median page of <strong>631 tokens</strong>, and
+      the 20 characters with more than 20 incoming links have a median of
+      <strong>7,484</strong>.
+    </p>
+
+    <figure>
+      <img src="../assets/img/fig_fame_vs_words.png" alt="Two log-log scatter plots of the 303 Marvel character pages. Left: in-degree plus one against page length in tokens, rising with Spearman correlation 0.75, with Spider-Man, Hulk, Scarlet Witch, Betsy Braddock, Quasar and Helix labelled. Right: page length against number of distinct word types, where all pages, famous in pink and obscure in cyan, fall on a single Heaps' law line with exponent 0.77 and R squared 0.993.">
+      <figcaption>
+        Left: more incoming links, longer page. Right: vocabulary against
+        length for the same pages. Famous pages (pink) and obscure ones (cyan)
+        sit on the same Heaps curve, so the famous ones are further along it,
+        not above it.
+      </figcaption>
+    </figure>
+
+    <h2>Finding 2 — but not a richer vocabulary</h2>
+    <p>
+      Do famous pages also use a richer vocabulary? The obvious measure, the
+      type&ndash;token ratio (types divided by tokens), says the opposite: it
+      falls with fame at <strong>ρ = &minus;0.73</strong>, from a median of
+      0.50 for the unlinked characters to 0.28 for the most linked. That would
+      make a great headline ("Wikipedia writes about its stars in simpler
+      language") and it would be wrong. The ratio drops for <em>any</em> long
+      text, because the common words get used up early and new types arrive
+      ever more slowly. That is Heaps' law.
+    </p>
+    <p>
+      So we fitted Heaps' law across pages instead: V = K·N<sup>β</sup>, with
+      V the vocabulary and N the length. One curve,
+      <strong>V ≈ 2.1·N<sup>0.77</sup></strong>, explains
+      <strong>99.3%</strong> of the variance in log vocabulary across all 303
+      pages. Then we asked whether famous pages sit above or below that curve.
+      They do neither: the correlation between in-degree and a page's distance
+      from the curve is <strong>ρ = &minus;0.03</strong> (interval &minus;0.14
+      to 0.08). A second check that does not rely on the fit agrees: cut every
+      page of at least 500 tokens down to its first 500 and the vocabulary of
+      that slice is unrelated to fame (ρ = 0.02, 272 pages).
+    </p>
+
+    <table class="stat-table">
+      <thead>
+        <tr><th>In-degree</th><th class="num">Pages</th><th class="num">Median tokens</th><th class="num">Median types</th><th class="num">Type&ndash;token ratio</th><th class="num">Distance from Heaps curve</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0</td><td class="num">58</td><td class="num">631</td><td class="num">327</td><td class="num">0.50</td><td class="num">&minus;0.002</td></tr>
+        <tr><td>1&ndash;2</td><td class="num">84</td><td class="num">880</td><td class="num">407</td><td class="num">0.45</td><td class="num">+0.004</td></tr>
+        <tr><td>3&ndash;7</td><td class="num">94</td><td class="num">1,501</td><td class="num">636</td><td class="num">0.41</td><td class="num">+0.006</td></tr>
+        <tr><td>8&ndash;20</td><td class="num">47</td><td class="num">3,852</td><td class="num">1,262</td><td class="num">0.32</td><td class="num">&minus;0.002</td></tr>
+        <tr><td>21+</td><td class="num">20</td><td class="num">7,484</td><td class="num">2,119</td><td class="num">0.28</td><td class="num">+0.002</td></tr>
+      </tbody>
+    </table>
+    <p>
+      The last column is the median residual in log<sub>10</sub> units. The
+      ratio column falls by almost half from top to bottom; the residual
+      column does not move.
+    </p>
+
+    <h2>Checking it in the raw text</h2>
+    <p>
+      The biggest outlier on the left panel is <strong>Quasar</strong>: 24
+      incoming links, which puts it in the top 20, but only 1,023 tokens. We
+      opened the file. It starts "Quasar is the name of several superheroes
+      appearing in American comic books&hellip;", so it is a short overview of
+      everyone who has worn the Quantum Bands, and the links come from the
+      cosmic corner of the network (Adam Warlock, Nova, Moondragon, Phyla-Vell,
+      Rocket Raccoon). It is a well-connected name, not a well-developed page.
+      In the other direction, <strong>Betsy Braddock</strong> has 12,885
+      tokens on only 7 incoming links. And as a sanity check on the tokenizer,
+      Helix's 194 tokens match a plain whitespace split of the file exactly.
+    </p>
+
+    <h2>What we cannot claim</h2>
+    <p>
+      <strong>Direction.</strong> This is a correlation in one frozen snapshot.
+      Long pages also link <em>out</em> more (out-degree against length is
+      ρ = 0.77), and in- and out-degree are themselves correlated (ρ = 0.70).
+      Holding out-degree fixed, the in-degree relationship shrinks to a partial
+      rank correlation of 0.46: still clearly there, but a good part of
+      "fame buys length" is simply that big pages are big in every direction.
+      <strong>Fame.</strong> In-degree only counts links from the other 302
+      pages in this one category, not Wikipedia as a whole.
+      <strong>Richness.</strong> Types per token is a crude measure. It says
+      nothing about which words are used, and at very short lengths it is not
+      perfectly flat: on the first 194 tokens (the length of the shortest page)
+      famous pages are slightly more varied (ρ = 0.21), probably because
+      obscure pages open with the same boilerplate sentence.
+      <strong>Preprocessing.</strong> Removing stopwords or keeping case moves
+      the Heaps exponent (0.84 and 0.78) but neither changes the conclusion.
+    </p>
+
+    <h2>What surprised us</h2>
+    <p>
+      How well Heaps' law works. We expected a cloud; we got a line. A
+      300-word page about a forgotten 1990s clone and the 10,000-word
+      Spider-Man article spend their vocabulary at the same rate, so Wikipedia's
+      editors write about stars and nobodies in the same register and simply
+      keep going for longer. The other lesson is the one the course keeps
+      repeating about LLM-written reports: the type&ndash;token ratio handed us
+      a strong, significant and completely misleading correlation, and it took
+      a baseline to see through it.
+    </p>
+
+    <div class="callout">
+      <strong>Next week:</strong> TF-IDF, so we can stop asking how many words
+      a page has and start asking which ones make it different.
+    </div>
+
+  </article>
+
+  <a class="back-link" href="../index.html">&larr; Back to all posts</a>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="group-credit">Nuria Máñez Molina (s234523) · Nour Marak (s234700) · Marah Osama Marak (s182946)</span>
+    <span>02805 Social Graphs &amp; Interactions, DTU — Week 5</span>
+  </div>
+</footer>
+
+</body>
+</html>
